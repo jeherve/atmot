@@ -113,8 +113,26 @@ OAuth in dev uses atproto's loopback client (no hosted metadata needed). In prod
 
 ## Deploy (Cloudflare Pages)
 
-- **Build command:** `npm run build`
+The git remote lives on [tangled.org](https://tangled.org), so Cloudflare's git-connected builds
+aren't available. Deployment uses **Wrangler direct upload** instead — build locally, then push the
+`dist/` folder straight to the `atmot` Pages project:
+
+```bash
+npm run deploy
+```
+
+This runs `npm run build` (typecheck + Vite build) and then
+`wrangler pages deploy dist --project-name=atmot --branch=trunk`. The first run prompts for
+`wrangler login`.
+
+The `--branch=trunk` flag is important: Wrangler tags a deployment with your current local git
+branch, and Cloudflare only promotes deployments whose branch matches the project's **production
+branch** (`trunk`). Without it, deploying from a feature branch produces a preview URL and leaves the
+live site unchanged.
+
 - **Output directory:** `dist`
+- **Pages project:** `atmot`
+- **Production branch:** `trunk`
 - **Custom domain:** `atmot.herve.bzh`
 
 `public/_redirects` provides the SPA history fallback so the `/p/<lang>/<n>` permalinks resolve to
