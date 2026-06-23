@@ -29,7 +29,7 @@ describe('renderFooter', () => {
     const footer = renderFooter(makeCtx());
     expect(footer.querySelector('a[href*="tangled.org"] svg')).not.toBeNull();
     const avatar = footer.querySelector('a[href*="bsky.app"] img');
-    expect(avatar?.getAttribute('src')).toBe('/jeremy-herve.webp');
+    expect(avatar?.getAttribute('src')).toBe('/jeremy-herve.svg');
   });
 
   it('keeps the About link and the puzzle lineage', () => {

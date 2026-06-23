@@ -55,7 +55,7 @@ export function renderFooter(ctx: Ctx, puzzleNumber?: number): HTMLElement {
           title: t(ctx.lang).profile,
           ariaLabel: t(ctx.lang).profile,
         },
-        el('img', { src: '/jeremy-herve.webp', alt: '', width: '18', height: '18', class: 'avatar' }),
+        el('img', { src: '/jeremy-herve.svg', alt: '', width: '18', height: '18', class: 'avatar' }),
       ),
     ),
   );
