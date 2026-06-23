@@ -109,3 +109,21 @@ documented interpretation was needed.
     repository's current/default branch locally (HEAD points at it). Creating a remote and marking
     `trunk` as the default branch *on the host* (GitHub/Tangled/etc.) is a one-step manual action for
     the owner, since no remote exists to push to yet.
+
+## PWA / installability
+
+21. **Manifest-only PWA — deliberately no service worker.** The app is installable
+    to the home screen via `public/manifest.webmanifest` + committed PNG icons
+    (rasterized once from `icon.svg`, flattened onto `#0e1116`) + apple/mobile
+    web-app meta tags. There is intentionally **no service worker and no caching
+    layer**: this is a daily game with dynamic reads (Constellation leaderboard,
+    PDS writes, OAuth), and an over-eager cache is exactly what would serve a
+    stale puzzle or stale bundle. Consequence: iOS add-to-home-screen and
+    Android manual "Add to Home Screen" both work from the manifest alone; the
+    proactive Android install banner (which needs a service worker) is forgone on
+    purpose. Loading speed is unchanged (CDN + ~94 KB bundle) with no new failure
+    modes. The regression guard `tests/pwa.test.ts` uses `node:*` imports, so
+    `"node"` was added to the shared `tsconfig.json` `types` allowlist — a
+    conscious trade-off: Node globals become visible to `src/` typechecking, but
+    `noEmit` + Vite bundling mean it can't affect runtime; narrow later by giving
+    `tests` its own node-typed project if that boundary is wanted.
