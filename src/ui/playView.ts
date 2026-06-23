@@ -30,6 +30,7 @@ export function renderPlayView(ctx: Ctx, root: HTMLElement): void {
   const puzzleNumber = puzzleNumberFor();
   let state = loadGame(ctx.lang, puzzleNumber);
   let pending = '';
+  let animateRow = -1; // row to flip-animate on the next renderContent (one-shot)
   let busy = false;
   let recordTried = false;
 
@@ -82,6 +83,7 @@ export function renderPlayView(ctx: Ctx, root: HTMLElement): void {
     }
     state = applyGuess(state, pending);
     pending = '';
+    animateRow = state.guesses.length - 1; // flip only the row we just submitted
     renderContent();
     if (isFinished(state)) void maybeRecord();
   }
@@ -205,7 +207,8 @@ export function renderPlayView(ctx: Ctx, root: HTMLElement): void {
   }
 
   function renderContent(): void {
-    const children: Array<Node> = [renderBoard(state, pending)];
+    const children: Array<Node> = [renderBoard(state, pending, animateRow)];
+    animateRow = -1; // one-shot: consumed by this render only
     if (isFinished(state)) {
       children.push(resultsPanel());
     } else if (!ctx.session) {
