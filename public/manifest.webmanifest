@@ -1,0 +1,17 @@
+{
+  "name": "AT Mot — a daily word game on atproto",
+  "short_name": "AT Mot",
+  "description": "A bilingual (English / French) daily 5-letter word game native to the AT Protocol. Your results live in your own PDS; the leaderboard is powered by the Constellation backlink index. No database.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0e1116",
+  "theme_color": "#f7f8fa",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["games"],
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

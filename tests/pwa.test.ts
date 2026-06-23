@@ -28,3 +28,25 @@ describe('PWA icons', () => {
     });
   }
 });
+
+describe('manifest', () => {
+  const manifest = JSON.parse(readFileSync(p('public/manifest.webmanifest'), 'utf8'));
+
+  it('has the required installability fields', () => {
+    expect(manifest.name).toBe('AT Mot — a daily word game on atproto');
+    expect(manifest.short_name).toBe('AT Mot');
+    expect(manifest.start_url).toBe('/');
+    expect(manifest.display).toBe('standalone');
+    expect(manifest.background_color).toBe('#0e1116');
+  });
+
+  it('declares 192 and 512 PNG icons that exist on disk', () => {
+    const sizes = manifest.icons.map((i: { sizes: string }) => i.sizes);
+    expect(sizes).toContain('192x192');
+    expect(sizes).toContain('512x512');
+    for (const icon of manifest.icons as Array<{ src: string; type: string }>) {
+      expect(icon.type).toBe('image/png');
+      expect(existsSync(p('public' + icon.src)), `${icon.src} missing`).toBe(true);
+    }
+  });
+});
