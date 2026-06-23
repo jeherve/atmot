@@ -26,6 +26,9 @@ architecture for atproto apps:
   gets the same word on the same calendar day, with no server in the loop.
 - **Standards-conformant lexicons** under the `bzh.herve.atmot.*` authority, following the
   [Lexicon Style Guide](https://atproto.com/guides/lexicon-style-guide).
+- **Installs to your home screen, no strings attached.** A web manifest makes it installable as a
+  standalone app — with **no service worker and no caching**, so there's none of the stale-content
+  machinery that fights against a daily game whose reads are always live.
 
 It is **not** a clone of any commercial word game: it ships its own word lists, its own brand and
 look-and-feel (a sky/atproto-leaning **teal / amber / slate** board palette, deliberately distinct),
