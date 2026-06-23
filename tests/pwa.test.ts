@@ -50,3 +50,19 @@ describe('manifest', () => {
     }
   });
 });
+
+describe('index.html PWA wiring', () => {
+  const html = readFileSync(p('index.html'), 'utf8');
+
+  it('links the manifest and apple-touch-icon', () => {
+    expect(html).toContain('rel="manifest"');
+    expect(html).toContain('href="/manifest.webmanifest"');
+    expect(html).toContain('rel="apple-touch-icon"');
+    expect(html).toContain('href="/apple-touch-icon.png"');
+  });
+
+  it('declares mobile-web-app capability and iOS app title', () => {
+    expect(html).toContain('name="mobile-web-app-capable"');
+    expect(html).toContain('name="apple-mobile-web-app-title"');
+  });
+});
