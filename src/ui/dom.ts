@@ -58,3 +58,14 @@ export function mount(container: HTMLElement, ...nodes: Child[]): void {
 export function clear(container: HTMLElement): void {
   container.replaceChildren();
 }
+
+/**
+ * True when an event originated from an editable element (text input, textarea,
+ * or contenteditable). Used to ignore global keystrokes while the user is typing
+ * into a field such as the sign-in form, so they don't leak into the game board.
+ */
+export function isEditableTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  const tag = target.tagName;
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable;
+}
