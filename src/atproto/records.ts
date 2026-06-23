@@ -63,29 +63,46 @@ function isAlreadyExists(err: unknown): boolean {
   return /already exists|RecordAlreadyExists|conflict/i.test(msg);
 }
 
+/** True if the player's own result record for this rkey already exists in their repo. */
+async function resultExists(session: Session, rkey: string): Promise<boolean> {
+  const res = await session.rpc.get('com.atproto.repo.getRecord', {
+    params: {
+      repo: session.did as `did:${string}:${string}`,
+      collection: COLLECTION.result,
+      rkey,
+    },
+  });
+  return res.ok;
+}
+
 /**
  * Write the immutable result record. Returns true if newly created, false if it
  * already existed (re-finishing the same puzzle is a no-op, not an error).
+ *
+ * The rkey is deterministic and the record is write-once, so reopening a finished
+ * puzzle re-attempts the same create on every load. We check existence first and
+ * skip the doomed write, because a duplicate createRecord is rejected by the PDS
+ * with an opaque 500 (`InternalServerError`) that no error-string heuristic can
+ * reliably distinguish from a genuine failure.
  */
 export async function writeResult(session: Session, result: GameResult): Promise<boolean> {
+  const rkey = resultRkey(result.lang as Lang, result.puzzleNumber);
+  if (await resultExists(session, rkey)) return false;
+
   const record = buildResultRecord(result, new Date().toISOString());
-  try {
-    const res = await session.rpc.post('com.atproto.repo.createRecord', {
-      input: {
-        repo: session.did as `did:${string}:${string}`,
-        collection: COLLECTION.result,
-        rkey: resultRkey(result.lang as Lang, result.puzzleNumber),
-        record: record as unknown as Record<string, unknown>,
-      },
-    });
-    if (!res.ok && !isAlreadyExists(res.data)) {
-      throw new Error(`createRecord failed: ${JSON.stringify(res.data)}`);
-    }
-    return res.ok;
-  } catch (err) {
-    if (isAlreadyExists(err)) return false;
-    throw err;
-  }
+  const res = await session.rpc.post('com.atproto.repo.createRecord', {
+    input: {
+      repo: session.did as `did:${string}:${string}`,
+      collection: COLLECTION.result,
+      rkey,
+      record: record as unknown as Record<string, unknown>,
+    },
+  });
+  if (res.ok) return true;
+  // Another tab or device may have won the race between our check and our write;
+  // a create that lost that race is still a no-op, not an error.
+  if (isAlreadyExists(res.data) || (await resultExists(session, rkey))) return false;
+  throw new Error(`createRecord failed: ${JSON.stringify(res.data)}`);
 }
 
 /** Read the player's own stats record, or null if they have none yet. */
