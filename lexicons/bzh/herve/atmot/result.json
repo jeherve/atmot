@@ -1,0 +1,74 @@
+{
+  "lexicon": 1,
+  "id": "bzh.herve.atmot.result",
+  "defs": {
+    "main": {
+      "type": "record",
+      "description": "An immutable record of one completed AT Mot daily puzzle, written to the player's own PDS. Write-once: no field may change after creation. The record key is deterministic, formatted as `<lang>-<puzzleNumber>` (e.g. `en-412`, `fr-7`), so each puzzle can be recorded at most once per account per language and re-solving cannot overwrite or spam. Stores tile colours only — never the answer or guessed letters — so index/firehose watchers cannot harvest answers and old records never spoil replays.",
+      "key": "any",
+      "record": {
+        "type": "object",
+        "required": ["lang", "puzzleNumber", "puzzleDate", "solved", "puzzleTarget", "createdAt"],
+        "properties": {
+          "lang": {
+            "type": "string",
+            "format": "language",
+            "description": "BCP-47 language of the puzzle series (e.g. `en`, `fr`). Each language is an independent daily series."
+          },
+          "puzzleNumber": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Per-language puzzle index = whole UTC days since the shared epoch (2026-06-23), +1. Launch day = 1."
+          },
+          "puzzleDate": {
+            "type": "string",
+            "format": "datetime",
+            "description": "UTC midnight datetime of the puzzle's calendar day."
+          },
+          "solved": {
+            "type": "boolean",
+            "description": "Whether the player guessed the word within the allowed attempts."
+          },
+          "guessCount": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 6,
+            "description": "Number of guesses used. Present only when solved; absent on a loss (optional so a loss is representable without a sentinel value)."
+          },
+          "grid": {
+            "type": "array",
+            "maxLength": 6,
+            "description": "The board as tile colours only, one element per guess row. Each element is an object (not a bare string) so context can be added later without a schema V2.",
+            "items": {
+              "type": "ref",
+              "ref": "#gridRow"
+            }
+          },
+          "puzzleTarget": {
+            "type": "string",
+            "format": "uri",
+            "description": "The canonical per-(lang,day) permalink `https://atmot.herve.bzh/p/<lang>/<puzzleNumber>`. This is the link the Constellation backlink index aggregates to build the leaderboard. It is deliberately a synthetic web URL, NOT a com.atproto.repo.strongRef, because the puzzle is not itself a network record — this is intentional, and is exactly what lets Constellation index it as a backlink target. Format is frozen and compared literally; emit it only via the app's shared helper."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "datetime",
+            "description": "When the player finished the puzzle and the record was created."
+          }
+        }
+      }
+    },
+    "gridRow": {
+      "type": "object",
+      "description": "One guess row, encoded as tile-state codes only (never the letters).",
+      "required": ["row"],
+      "properties": {
+        "row": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 5,
+          "description": "Exactly five tile-state codes, one per column: `G` = correct (right letter, right spot), `Y` = present (right letter, wrong spot), `B` = absent (not in the word). Example: `BGYBB`."
+        }
+      }
+    }
+  }
+}

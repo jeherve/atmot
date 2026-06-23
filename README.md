@@ -1,0 +1,128 @@
+# AT Mot
+
+**A bilingual (English / French) daily word game, native to the [AT Protocol](https://atproto.com).**
+Guess the hidden five-letter word in six tries. Your results live in **your own PDS**, and the
+leaderboard is read from the public **[Constellation](https://constellation.microcosm.blue)**
+backlink index — there is **no application database and no bespoke backend.**
+
+🌐 **[atmot.herve.bzh](https://atmot.herve.bzh)**
+
+> _“mot” is French for “word” — and a play on at**proto**._
+
+---
+
+## Why it's interesting
+
+AT Mot is a working example of the **“data on your PDS, reads via Constellation, no AppView”**
+architecture for atproto apps:
+
+- **Your data is yours.** Each finished puzzle is written as a `bzh.herve.atmot.result` record to
+  your repo via browser OAuth. There is no server storing your games — there is no server.
+- **The leaderboard has no database.** Every result record links to a canonical per-day permalink.
+  The daily stats and shared grids are built by querying Constellation for backlinks to that
+  permalink and aggregating **in the browser**.
+- **Deterministic & global.** Each language is its own daily series; the day's word is computed on
+  every client from a bundled list, indexed by whole **UTC** days since launch. Everyone worldwide
+  gets the same word on the same calendar day, with no server in the loop.
+- **Standards-conformant lexicons** under the `bzh.herve.atmot.*` authority, following the
+  [Lexicon Style Guide](https://atproto.com/guides/lexicon-style-guide).
+
+It is **not** a clone of any commercial word game: it ships its own word lists, its own brand and
+look-and-feel (a sky/atproto-leaning **teal / amber / slate** board palette, deliberately distinct),
+and its own lexicons. The five-in-a-row word-guessing mechanic is generic; the implementation,
+data, and design here are original.
+
+## Architecture at a glance
+
+```
+        ┌─────────────── browser (static SPA on Cloudflare Pages) ───────────────┐
+        │                                                                         │
+  play  │  deterministic daily word (bundled list, UTC day index)                 │
+        │                              │                                          │
+  write │  OAuth session ── createRecord ──▶  YOUR PDS                            │
+        │     result (write-once)            ├─ bzh.herve.atmot.result            │
+        │     stats   (self, mutable)        └─ bzh.herve.atmot.stats             │
+        │                                                                         │
+  share │  createRecord ──▶ app.bsky.feed.post  (emoji grid + puzzle permalink)   │
+        │                                                                         │
+  read  │  Constellation backlinks to the permalink ──▶ leaderboard + shared      │
+        │     (counts + record lists)        grids + live likes/reposts/replies   │
+        └─────────────────────────────────────────────────────────────────────────┘
+```
+
+The only permitted server-side component is an **optional, stateless** Cloudflare Worker cache
+(documented fallback, not used by default). Core gameplay and reads work entirely client-side.
+
+## Lexicons
+
+Published as `com.atproto.lexicon.schema` records under **`bzh.herve.atmot.*`**:
+
+| NSID | Key | Purpose |
+| --- | --- | --- |
+| `bzh.herve.atmot.result` | `any` (`<lang>-<n>`) | One **immutable, write-once** record per completed puzzle. Stores tile **colours only** — never the answer or guessed letters. Carries the `puzzleTarget` permalink that Constellation indexes. |
+| `bzh.herve.atmot.stats` | `self` | A single **mutable** streak/stats record. Also the app's **declaration record**: its presence means "this account plays AT Mot"; its deletion means opt-out. |
+| `bzh.herve.atmot.defs` | — | Shared client-side view objects (`resultView`, `leaderboardEntry`, `dailyStats`). |
+
+The `puzzleTarget` is a canonical web URL — `https://atmot.herve.bzh/p/<lang>/<puzzleNumber>` —
+**emitted from a single shared helper** so the write path and the Constellation read path can never
+diverge. The format is frozen (Constellation compares it literally).
+
+Validate the schemas against the Style Guide rules:
+
+```sh
+npm run lexicons:validate
+```
+
+Publish them (run by the account that controls the namespace authority):
+
+```sh
+ATMOT_PUBLISH_IDENTIFIER=you.example ATMOT_PUBLISH_PASSWORD=<app-password> npm run lexicons:publish
+```
+
+> For network-wide lexicon resolution, the authority domain also needs a `_lexicon` DNS TXT record
+> (`did=<publishing did>`) pointing at the publishing account's DID.
+
+## Word lists
+
+Self-curated per language, from permissively-licensed sources, normalized to **uppercase,
+unaccented A–Z** at build time (French diacritics are stripped and ligatures expanded — `Œ→OE`,
+`Æ→AE` — matching the accent-free convention of the official French Scrabble dictionary):
+
+| Language | Dictionary | Commonness ranking |
+| --- | --- | --- |
+| English | [ENABLE](https://github.com/dolph/dictionary) — **Public Domain** | hermitdave/FrequencyWords (MIT) |
+| French | [an-array-of-french-words](https://github.com/words/an-array-of-french-words) — **MIT** | hermitdave/FrequencyWords (MIT) |
+
+The French list is sourced **independently** and has **no relation to** the `wordle-fr` / “Le Mot”
+project. Lists are generated by `npm run build:words` and committed (the generated JSON _is_ the game
+content); the build is reproducible (same sources + fixed seeds → identical output).
+
+## Develop
+
+```sh
+npm install
+npm run dev         # http://127.0.0.1:12520  (atproto OAuth forbids localhost; use the loopback IP)
+npm test            # vitest — deterministic engine, scoring, stats, share, lexicon format
+npm run typecheck   # tsc (app + node scripts)
+npm run lint
+npm run build       # typecheck + production build into dist/
+```
+
+OAuth in dev uses atproto's loopback client (no hosted metadata needed). In production the SPA serves
+`/client-metadata.json`, and `client_id` equals that exact URL.
+
+## Deploy (Cloudflare Pages)
+
+- **Build command:** `npm run build`
+- **Output directory:** `dist`
+- **Custom domain:** `atmot.herve.bzh`
+
+`public/_redirects` provides the SPA history fallback so the `/p/<lang>/<n>` permalinks resolve to
+real pages. No origin server or environment variables are required for core gameplay.
+
+## License
+
+Dual-licensed under **MIT** OR **Apache-2.0** (mirroring atproto), at your option. See
+[LICENSE-MIT](./LICENSE-MIT) and [LICENSE-APACHE](./LICENSE-APACHE). Third-party data and font
+attributions are in [NOTICE.md](./NOTICE.md). Design rationale and judgment calls are recorded in
+[DECISIONS.md](./DECISIONS.md).

@@ -1,0 +1,110 @@
+{
+  "lexicon": 1,
+  "id": "bzh.herve.atmot.defs",
+  "defs": {
+    "resultView": {
+      "type": "object",
+      "description": "Client-side view of one player's result, assembled in the browser after reading records (there is no server implementing query lexicons in v1).",
+      "required": ["did", "lang", "puzzleNumber", "solved"],
+      "properties": {
+        "did": {
+          "type": "string",
+          "format": "did",
+          "description": "DID of the player who recorded this result."
+        },
+        "handle": {
+          "type": "string",
+          "format": "handle",
+          "description": "Resolved handle of the player, if available."
+        },
+        "lang": {
+          "type": "string",
+          "format": "language",
+          "description": "Language series of the puzzle."
+        },
+        "puzzleNumber": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Per-language puzzle index."
+        },
+        "solved": {
+          "type": "boolean",
+          "description": "Whether the player solved the puzzle."
+        },
+        "guessCount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 6,
+          "description": "Guesses used; present only when solved."
+        }
+      }
+    },
+    "leaderboardEntry": {
+      "type": "object",
+      "description": "One aggregated row of a daily leaderboard, computed in the browser from result records discovered via Constellation.",
+      "required": ["did", "solved"],
+      "properties": {
+        "did": {
+          "type": "string",
+          "format": "did",
+          "description": "DID of the player."
+        },
+        "handle": {
+          "type": "string",
+          "format": "handle",
+          "description": "Resolved handle of the player, if available."
+        },
+        "solved": {
+          "type": "boolean",
+          "description": "Whether the player solved the puzzle."
+        },
+        "guessCount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 6,
+          "description": "Guesses used; present only when solved."
+        }
+      }
+    },
+    "dailyStats": {
+      "type": "object",
+      "description": "Aggregate statistics for one (lang, puzzleNumber), computed in the browser. Counts are read live from Constellation and never stored on any record.",
+      "required": ["lang", "puzzleNumber", "players"],
+      "properties": {
+        "lang": {
+          "type": "string",
+          "format": "language",
+          "description": "Language series."
+        },
+        "puzzleNumber": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Per-language puzzle index."
+        },
+        "players": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Distinct DIDs that recorded a result for this puzzle."
+        },
+        "solvers": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How many of those players solved it."
+        },
+        "averageGuesses": {
+          "type": "integer",
+          "description": "Average winning guess count, scaled by 100 (integer to avoid float ambiguity); e.g. 412 means 4.12. Absent when there are no solvers."
+        },
+        "guessDistribution": {
+          "type": "array",
+          "maxLength": 6,
+          "description": "Histogram of winning guess counts across all solvers.",
+          "items": {
+            "type": "ref",
+            "ref": "bzh.herve.atmot.stats#guessBucket"
+          }
+        }
+      }
+    }
+  }
+}

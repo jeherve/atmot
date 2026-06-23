@@ -1,0 +1,94 @@
+{
+  "lexicon": 1,
+  "id": "bzh.herve.atmot.stats",
+  "defs": {
+    "main": {
+      "type": "record",
+      "description": "A single, mutable per-account streak/stats record, edited in place like a profile. It also doubles as AT Mot's declaration / signaling record: its presence signals that an account plays AT Mot, and its deletion signals opt-out. Listing this one collection across the network enumerates every AT Mot player, so it is created on first play even before any stats accrue.",
+      "key": "literal:self",
+      "record": {
+        "type": "object",
+        "required": ["updatedAt"],
+        "properties": {
+          "byLang": {
+            "type": "array",
+            "description": "Per-language statistics. Optional and possibly empty (e.g. on the first declaration write before any game completes).",
+            "items": {
+              "type": "ref",
+              "ref": "#langStats"
+            }
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "datetime",
+            "description": "When this record was last updated."
+          }
+        }
+      }
+    },
+    "langStats": {
+      "type": "object",
+      "description": "Streak and aggregate statistics for one language series.",
+      "required": ["lang"],
+      "properties": {
+        "lang": {
+          "type": "string",
+          "format": "language",
+          "description": "BCP-47 language this block describes."
+        },
+        "currentStreak": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Consecutive solved puzzles up to the most recent played puzzle."
+        },
+        "maxStreak": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Longest streak ever achieved in this language."
+        },
+        "gamesPlayed": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total puzzles completed (won or lost) in this language."
+        },
+        "gamesWon": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total puzzles solved in this language."
+        },
+        "lastPuzzleNumber": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Puzzle number of the most recent completed puzzle, used to detect streak breaks."
+        },
+        "guessDistribution": {
+          "type": "array",
+          "maxLength": 6,
+          "description": "Histogram of winning guess counts. Each element is an object (not a bare integer) so context can be added later without a schema V2.",
+          "items": {
+            "type": "ref",
+            "ref": "#guessBucket"
+          }
+        }
+      }
+    },
+    "guessBucket": {
+      "type": "object",
+      "description": "One bucket of the guess-count histogram.",
+      "required": ["guesses", "count"],
+      "properties": {
+        "guesses": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 6,
+          "description": "Number of guesses it took to win (1–6)."
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How many wins used exactly this many guesses."
+        }
+      }
+    }
+  }
+}
