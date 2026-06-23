@@ -1,8 +1,12 @@
+import type { Lang } from '../config.js';
 import type { GameState } from '../state/game.js';
 import { keyboardStates } from '../state/game.js';
 import { el } from './dom.js';
 
-const ROWS = ['QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM'];
+const LAYOUTS: Record<Lang, string[]> = {
+  en: ['QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM'],
+  fr: ['AZERTYUIOP', 'QSDFGHJKLM', 'WXCVBN'],
+};
 
 export interface KeyHandlers {
   onLetter: (letter: string) => void;
@@ -11,11 +15,11 @@ export interface KeyHandlers {
 }
 
 /** On-screen keyboard, colour-coded by best-known letter state. */
-export function renderKeyboard(state: GameState, h: KeyHandlers): HTMLElement {
+export function renderKeyboard(state: GameState, lang: Lang, h: KeyHandlers): HTMLElement {
   const states = keyboardStates(state);
   const kb = el('div', { class: 'keyboard' });
 
-  ROWS.forEach((letters, i) => {
+  LAYOUTS[lang].forEach((letters, i) => {
     const row = el('div', { class: 'kbrow' });
     if (i === 2) {
       row.append(
