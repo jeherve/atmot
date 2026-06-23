@@ -18,6 +18,7 @@ import { writeFileSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { normalizeWord } from '../src/engine/normalize.ts';
+import { isInflectedSForm } from './plurals.ts';
 import frenchDictionary from 'an-array-of-french-words' with { type: 'json' };
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -104,27 +105,31 @@ async function buildEnglish(): Promise<void> {
     fetchText(SOURCES.enFreq),
   ]);
 
-  // Dictionary: every 5-letter A–Z word in ENABLE => the allowed-guess set.
-  const allowedSet = new Set<string>();
+  // Full ENABLE dictionary (every length): the singular of a 5-letter plural is
+  // shorter than five letters, so plural detection needs words of all lengths.
+  const dictAll = new Set<string>();
+  const allowedSet = new Set<string>(); // 5-letter subset => the allowed-guess set.
   for (const w of enableRaw.split('\n')) {
     const n = normalizeWord(w);
+    if (n.length === 0) continue;
+    dictAll.add(n);
     if (n.length === WORD_LENGTH) allowedSet.add(n);
   }
+  const isWord = (w: string): boolean => dictAll.has(w);
 
   // Commonness ranking from the frequency list (only words present in ENABLE).
   const freqRanked = parseFreq(freqRaw)
     .map(normalizeWord)
     .filter((w) => w.length === WORD_LENGTH && allowedSet.has(w));
 
-  // Heuristic: drop obvious plurals as answers (word ends in S and the singular
-  // is also a dictionary word) so the answer pool is mostly base words. They stay
-  // valid as guesses.
+  // Heuristic: keep obvious -S inflections (plurals, 3rd-person verbs) out of the
+  // answer pool so it stays mostly base words. They remain valid as guesses.
   const seen = new Set<string>();
   const answerPool: string[] = [];
   for (const w of freqRanked) {
     if (seen.has(w)) continue;
     seen.add(w);
-    if (w.endsWith('S') && allowedSet.has(w.slice(0, -1))) continue;
+    if (isInflectedSForm(w, isWord)) continue;
     answerPool.push(w);
     if (answerPool.length >= 2500) break;
   }

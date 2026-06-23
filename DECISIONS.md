@@ -32,6 +32,11 @@ documented interpretation was needed.
    words, and apostrophe-mangled contraction fragments. So the *dictionary* decides validity and the
    *frequency* list only decides commonness/ordering. French additionally drops dictionary entries
    containing apostrophes/hyphens and a small set of elision stems (`JUSQU`, `LORSQU`, …).
+   English additionally keeps obvious **inflected `-S` forms** (regular plurals, `-es`/`-ies`
+   plurals, and 3rd-person verbs like `ROOMS`, `BOXES`, `FLIES`) **out of the answer pool** — they
+   stay valid as guesses. Detection (`scripts/plurals.ts`) checks the singular against the *full*
+   ENABLE dictionary of every length; an earlier version checked only the 5-letter subset, so no
+   4-letter singular ever matched and the filter silently did nothing.
 
 6. **Answer order is a fixed seeded shuffle baked into the committed JSON.** Daily agreement comes
    from shared *data* (every client reads the same ordered array) rather than runtime computation.
