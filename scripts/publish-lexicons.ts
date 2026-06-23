@@ -5,7 +5,9 @@
  * Run by the OWNER of the account that controls the namespace authority. Requires:
  *   ATMOT_PUBLISH_IDENTIFIER  handle or DID of the publishing account
  *   ATMOT_PUBLISH_PASSWORD    app password (Settings → App Passwords)
- *   ATMOT_PDS                 PDS service URL (default https://bsky.social)
+ *   ATMOT_PDS                 optional PDS override; by default the account's PDS
+ *                             is resolved from its DID document (works with any
+ *                             host, including self-hosted PDSs)
  *
  * For lexicon resolution to work network-wide, the authority domain also needs a
  * `_lexicon` DNS TXT record (`did=<publishing did>`) — see README. Publishing the
