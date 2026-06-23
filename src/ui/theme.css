@@ -513,6 +513,7 @@ p {
   line-height: 1.18;
   letter-spacing: 2px;
   margin: 8px 0 14px;
+  white-space: pre;
 }
 .result-actions {
   display: flex;
