@@ -3,5 +3,6 @@ dist/
 *.local
 .DS_Store
 .vite/
+.wrangler/
 coverage/
 *.log
