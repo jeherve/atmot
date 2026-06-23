@@ -103,6 +103,20 @@ export function parsePuzzleTarget(input: string): { lang: Lang; puzzleNumber: nu
   return { lang, puzzleNumber };
 }
 
+/**
+ * Where the language toggle should take you. Puzzle pages encode the language
+ * in the URL (`/p/<lang>/<n>`), so the router re-derives the language from the
+ * path on every render — switching `ctx.lang` alone leaves a puzzle page on its
+ * original language. Returns the equivalent puzzle path in `lang`, or null when
+ * the current path is language-independent (or already in `lang`) and a plain
+ * re-render suffices.
+ */
+export function pathForLangSwitch(currentPath: string, lang: Lang): string | null {
+  const puzzle = parsePuzzleTarget(currentPath);
+  if (puzzle && puzzle.lang !== lang) return `/p/${lang}/${puzzle.puzzleNumber}`;
+  return null;
+}
+
 /** Deterministic rkey for a result record: `<lang>-<puzzleNumber>` (documented in the lexicon). */
 export function resultRkey(lang: Lang, puzzleNumber: number): string {
   return `${lang}-${puzzleNumber}`;
