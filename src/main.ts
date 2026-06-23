@@ -1,5 +1,5 @@
 import './ui/theme.css';
-import { isLang, type Lang, parsePuzzleTarget } from './config.js';
+import { isLang, type Lang, parsePuzzleTarget, pathForLangSwitch } from './config.js';
 import {
   isOAuthCallback,
   completeCallback,
@@ -37,6 +37,13 @@ const ctx: Ctx = {
     ctx.lang = lang;
     localStorage.setItem(LANG_KEY, lang);
     document.documentElement.lang = lang;
+    // On a puzzle page the language lives in the URL, so switch the path too —
+    // otherwise render() re-derives the old language and nothing visibly changes.
+    const dest = pathForLangSwitch(location.pathname, lang);
+    if (dest) {
+      ctx.navigate(dest);
+      return;
+    }
     render();
   },
 

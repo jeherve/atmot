@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   puzzleTarget,
   parsePuzzleTarget,
+  pathForLangSwitch,
   resultRkey,
   daysSinceEpoch,
   puzzleNumberFor,
@@ -32,6 +33,22 @@ describe('puzzleTarget — frozen format (Constellation matches literally)', () 
     expect(parsePuzzleTarget('https://atmot.herve.bzh/p/FR/412')).toBeNull();
     expect(parsePuzzleTarget('https://atmot.herve.bzh/p/de/1')).toBeNull();
     expect(parsePuzzleTarget('https://atmot.herve.bzh/p/fr/0')).toBeNull();
+  });
+});
+
+describe('pathForLangSwitch — keep puzzle pages in sync with the lang toggle', () => {
+  it('redirects a puzzle page to the same puzzle in the new language', () => {
+    expect(pathForLangSwitch('/p/fr/1', 'en')).toBe('/p/en/1');
+    expect(pathForLangSwitch('/p/en/412', 'fr')).toBe('/p/fr/412');
+  });
+
+  it('returns null when the puzzle is already in the target language', () => {
+    expect(pathForLangSwitch('/p/fr/1', 'fr')).toBeNull();
+  });
+
+  it('returns null on language-independent paths (home, about)', () => {
+    expect(pathForLangSwitch('/', 'fr')).toBeNull();
+    expect(pathForLangSwitch('/about', 'en')).toBeNull();
   });
 });
 
