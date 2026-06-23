@@ -44,8 +44,9 @@ interface Strings {
   constellationDown: string;
   backToGame: string;
   langName: string;
-  dataNote: string;
   about: string;
+  sourceCode: string;
+  profile: string;
 }
 
 const EN: Strings = {
@@ -95,8 +96,9 @@ const EN: Strings = {
   constellationDown: 'Live stats are unavailable right now — the index may be catching up.',
   backToGame: 'Back to today’s game',
   langName: 'English',
-  dataNote: 'Your results live in your own PDS. The leaderboard is read from the Constellation backlink index. No database.',
   about: 'About',
+  sourceCode: 'Source code on tangled.org',
+  profile: '@jeremy.herve.bzh on Bluesky',
 };
 
 const FR: Strings = {
@@ -146,8 +148,9 @@ const FR: Strings = {
   constellationDown: 'Les statistiques en direct sont indisponibles — l’index est peut-être en train de rattraper son retard.',
   backToGame: 'Retour au mot du jour',
   langName: 'Français',
-  dataNote: 'Vos résultats vivent dans votre propre PDS. Le classement provient de l’index de backlinks Constellation. Aucune base de données.',
   about: 'À propos',
+  sourceCode: 'Code source sur tangled.org',
+  profile: '@jeremy.herve.bzh sur Bluesky',
 };
 
 const TABLE: Record<Lang, Strings> = { en: EN, fr: FR };

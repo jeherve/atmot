@@ -624,6 +624,29 @@ footer.status b {
   color: var(--fg);
   font-weight: 500;
 }
+footer.status .line.links {
+  align-items: center;
+}
+footer.status .iconlink {
+  display: inline-flex;
+  align-items: center;
+  color: var(--fg-muted);
+  transition: color 0.15s ease;
+}
+footer.status .iconlink:hover {
+  color: var(--fg);
+}
+footer.status .iconlink svg {
+  width: 15px;
+  height: 15px;
+  display: block;
+}
+footer.status .iconlink .avatar {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: block;
+}
 
 .center {
   text-align: center;
