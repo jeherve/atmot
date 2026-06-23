@@ -32,4 +32,12 @@ describe('renderBoard reveal animation', () => {
     const firstRow = board.querySelectorAll('.board-row')[0]!;
     animated.forEach((tile) => expect(firstRow.contains(tile)).toBe(true));
   });
+
+  it('staggers the reveal so tiles flip one by one left to right', () => {
+    const board = renderBoard(gameWithOneGuess(), '', 0);
+    const delays = Array.from(board.querySelectorAll<HTMLElement>('.tile.reveal')).map((tile) =>
+      tile.style.getPropertyValue('--reveal-delay'),
+    );
+    expect(delays).toEqual(['0ms', '300ms', '600ms', '900ms', '1200ms']);
+  });
 });

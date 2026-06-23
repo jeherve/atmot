@@ -21,7 +21,14 @@ const STATE_LABEL: Record<TileState, Record<Lang, string>> = {
  * Every other render (keystrokes, restored games, language switches) passes the
  * default `-1`, so already-revealed rows keep their colours without re-flipping
  * each time the board is rebuilt.
+ *
+ * On the animated row each tile's flip is delayed by its column index (see
+ * `REVEAL_STEP_MS`), so the result is revealed letter by letter from left to
+ * right; the colour stays hidden until the flip's midpoint (handled in CSS).
  */
+/** Delay between consecutive tile flips on a freshly-submitted row, in ms. */
+const REVEAL_STEP_MS = 300;
+
 export function renderBoard(state: GameState, pending: string, animateRow = -1): HTMLElement {
   const rows = scoredRows(state);
   const board = el('div', { class: 'board', role: 'grid', ariaLabel: t(state.lang).play });
@@ -35,12 +42,16 @@ export function renderBoard(state: GameState, pending: string, animateRow = -1):
       let letter = '';
       const cls = ['tile'];
       let label: string | undefined;
+      let style: string | undefined;
 
       if (guess && states) {
         letter = guess[c] ?? '';
         const s = states[c]!;
         cls.push(s);
-        if (r === animateRow) cls.push('reveal');
+        if (r === animateRow) {
+          cls.push('reveal');
+          style = `--reveal-delay: ${c * REVEAL_STEP_MS}ms`;
+        }
         label = `${letter}, ${STATE_LABEL[s][state.lang]}`;
       } else if (r === activeRow) {
         letter = pending[c] ?? '';
@@ -48,7 +59,11 @@ export function renderBoard(state: GameState, pending: string, animateRow = -1):
       }
 
       row.append(
-        el('div', { class: cls.join(' '), role: 'gridcell', ariaLabel: label ?? letter }, letter),
+        el(
+          'div',
+          { class: cls.join(' '), role: 'gridcell', ariaLabel: label ?? letter, style },
+          letter,
+        ),
       );
     }
     board.append(row);

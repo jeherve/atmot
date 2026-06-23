@@ -290,20 +290,27 @@ main {
 .tile.absent {
   color: var(--tile-fg);
   border-color: transparent;
+  /* --reveal-bg / --reveal-ring carry the destination colour so the flip
+     keyframe can apply it at the midpoint; static rows just use them directly. */
+  background: var(--reveal-bg);
+  box-shadow: var(--reveal-ring, none);
 }
 .tile.correct {
-  background: var(--tile-correct);
+  --reveal-bg: var(--tile-correct);
 }
 .tile.present {
-  background: var(--tile-present);
+  --reveal-bg: var(--tile-present);
   /* secondary non-hue cue: inner ring distinguishes present from correct */
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.45);
+  --reveal-ring: inset 0 0 0 2px rgba(255, 255, 255, 0.45);
 }
 .tile.absent {
-  background: var(--tile-absent);
+  --reveal-bg: var(--tile-absent);
 }
+/* Freshly-submitted row: flip each tile in turn (delay set per tile in board.ts)
+   and keep the colour hidden until the tile is edge-on at the flip's midpoint. */
 .tile.reveal {
-  animation: flip 0.5s ease forwards;
+  animation: flip 0.5s ease both;
+  animation-delay: var(--reveal-delay, 0ms);
 }
 
 @keyframes pop {
@@ -317,12 +324,30 @@ main {
 @keyframes flip {
   0% {
     transform: rotateX(0);
+    background: transparent;
+    border-color: var(--tile-edge);
+    color: var(--fg);
+    box-shadow: none;
   }
   50% {
     transform: rotateX(90deg);
+    background: transparent;
+    border-color: var(--tile-edge);
+    color: var(--fg);
+    box-shadow: none;
+  }
+  50.01% {
+    background: var(--reveal-bg);
+    border-color: transparent;
+    color: var(--tile-fg);
+    box-shadow: var(--reveal-ring, none);
   }
   100% {
     transform: rotateX(0);
+    background: var(--reveal-bg);
+    border-color: transparent;
+    color: var(--tile-fg);
+    box-shadow: var(--reveal-ring, none);
   }
 }
 .row-shake {
@@ -611,6 +636,8 @@ footer.status b {
   *::before,
   *::after {
     animation-duration: 0.001ms !important;
+    /* zero the per-tile flip stagger too, so colours appear at once */
+    animation-delay: 0ms !important;
     transition-duration: 0.001ms !important;
   }
 }
