@@ -122,4 +122,8 @@ documented interpretation was needed.
     Android manual "Add to Home Screen" both work from the manifest alone; the
     proactive Android install banner (which needs a service worker) is forgone on
     purpose. Loading speed is unchanged (CDN + ~94 KB bundle) with no new failure
-    modes.
+    modes. The regression guard `tests/pwa.test.ts` uses `node:*` imports, so
+    `"node"` was added to the shared `tsconfig.json` `types` allowlist — a
+    conscious trade-off: Node globals become visible to `src/` typechecking, but
+    `noEmit` + Vite bundling mean it can't affect runtime; narrow later by giving
+    `tests` its own node-typed project if that boundary is wanted.

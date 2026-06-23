@@ -6,10 +6,18 @@ import { fileURLToPath } from 'node:url';
 const root = fileURLToPath(new URL('..', import.meta.url));
 const p = (rel: string) => root + rel;
 
+const SIG = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+
 /** Read width/height from a PNG's IHDR chunk (bytes 16–24, big-endian). */
 function pngSize(path: string): { width: number; height: number } {
   const buf = readFileSync(path);
+  if (!buf.subarray(0, 8).equals(SIG)) throw new Error(`${path} is not a PNG`);
   return { width: buf.readUInt32BE(16), height: buf.readUInt32BE(20) };
+}
+
+/** PNG IHDR color type (byte 25): 2 = RGB (opaque), 6 = RGBA. */
+function pngColorType(path: string): number {
+  return readFileSync(path).readUInt8(25);
 }
 
 describe('PWA icons', () => {
@@ -25,6 +33,8 @@ describe('PWA icons', () => {
       const { width, height } = pngSize(p(rel));
       expect(width).toBe(size);
       expect(height).toBe(size);
+      // Icons must be opaque (flattened onto #0e1116), not RGBA.
+      expect(pngColorType(p(rel)), `${rel} has an alpha channel`).toBe(2);
     });
   }
 });
@@ -64,5 +74,6 @@ describe('index.html PWA wiring', () => {
   it('declares mobile-web-app capability and iOS app title', () => {
     expect(html).toContain('name="mobile-web-app-capable"');
     expect(html).toContain('name="apple-mobile-web-app-title"');
+    expect(html).toContain('name="apple-mobile-web-app-status-bar-style"');
   });
 });
