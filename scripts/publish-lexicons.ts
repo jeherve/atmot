@@ -22,7 +22,6 @@ const SCHEMA_COLLECTION = 'com.atproto.lexicon.schema';
 
 const identifier = process.env.ATMOT_PUBLISH_IDENTIFIER;
 const password = process.env.ATMOT_PUBLISH_PASSWORD;
-const pds = process.env.ATMOT_PDS ?? 'https://bsky.social';
 
 if (!identifier || !password) {
   console.error(
@@ -30,6 +29,40 @@ if (!identifier || !password) {
   );
   process.exit(1);
 }
+
+const APPVIEW = 'https://public.api.bsky.app';
+
+/** Resolve a handle or DID to its DID. */
+async function resolveDid(id: string): Promise<string> {
+  if (id.startsWith('did:')) return id;
+  const res = await fetch(
+    `${APPVIEW}/xrpc/com.atproto.identity.resolveHandle?handle=${encodeURIComponent(id)}`,
+  );
+  if (!res.ok) throw new Error(`could not resolve handle ${id}`);
+  return ((await res.json()) as { did: string }).did;
+}
+
+/** Resolve a DID's PDS service endpoint from its DID document. */
+async function resolvePds(did: string): Promise<string> {
+  const docUrl = did.startsWith('did:web:')
+    ? `https://${did.slice('did:web:'.length)}/.well-known/did.json`
+    : `https://plc.directory/${did}`;
+  const res = await fetch(docUrl);
+  if (!res.ok) throw new Error(`could not fetch DID document for ${did}`);
+  const doc = (await res.json()) as {
+    service?: Array<{ id: string; type: string; serviceEndpoint: string }>;
+  };
+  const svc = (doc.service ?? []).find(
+    (s) => s.id.endsWith('#atproto_pds') || s.type === 'AtprotoPersonalDataServer',
+  );
+  if (!svc?.serviceEndpoint) throw new Error(`no PDS endpoint in DID document for ${did}`);
+  return svc.serviceEndpoint;
+}
+
+// Resolve the account's real PDS (honour an explicit override if provided).
+const did0 = await resolveDid(identifier);
+const pds = process.env.ATMOT_PDS ?? (await resolvePds(did0));
+console.log(`publishing to PDS ${pds}`);
 
 function walk(dir: string): string[] {
   const out: string[] = [];
