@@ -10,7 +10,7 @@ import {
   toGameResult,
 } from '../state/game.js';
 import { recordCompletedGame, sharePost } from '../atproto/records.js';
-import { el, mount } from './dom.js';
+import { el, mount, isEditableTarget } from './dom.js';
 import { toast } from './toast.js';
 import { renderHeader, navTo } from './header.js';
 import { renderFooter } from './footer.js';
@@ -223,6 +223,7 @@ export function renderPlayView(ctx: Ctx, root: HTMLElement): void {
   // Physical keyboard.
   const onKey = (e: KeyboardEvent): void => {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (isEditableTarget(e.target)) return; // don't echo sign-in typing into the board
     if (e.key === 'Enter') submit();
     else if (e.key === 'Backspace') backspace();
     else if (/^[a-zA-Z]$/.test(e.key)) typeLetter(e.key);
@@ -249,6 +250,8 @@ export function signInBar(ctx: Ctx, prompt: string): HTMLElement {
   const s = t(ctx.lang);
   const input = el('input', {
     type: 'text',
+    name: 'handle',
+    id: 'atmot-handle',
     placeholder: s.signInPlaceholder,
     ariaLabel: s.signIn,
     autocapitalize: 'none',
