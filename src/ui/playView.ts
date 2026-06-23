@@ -14,13 +14,17 @@ import { el, mount, isEditableTarget } from './dom.js';
 import { toast } from './toast.js';
 import { renderHeader, navTo } from './header.js';
 import { renderFooter } from './footer.js';
-import { renderBoard } from './board.js';
+import { renderBoard, REVEAL_DURATION_MS } from './board.js';
 import { renderKeyboard } from './keyboard.js';
 import { renderDistribution, renderShareGrid, renderCountdown, stopCountdown } from './widgets.js';
 import type { Ctx } from './context.js';
 
 // Cache the latest stats per (lang) for display after recording.
 const statsCache = new Map<string, StatsRecord>();
+
+/** True when the user asked the OS to minimise motion (animations are near-instant). */
+const reducedMotion = (): boolean =>
+  globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 let detachKeydown: (() => void) | null = null;
 
 export function renderPlayView(ctx: Ctx, root: HTMLElement): void {
@@ -51,7 +55,9 @@ export function renderPlayView(ctx: Ctx, root: HTMLElement): void {
     }
   }
 
-  async function maybeRecord(): Promise<void> {
+  // `settleMs` holds the re-render back until the reveal animation has finished,
+  // so saving the game doesn't snap the still-flipping final row to its colours.
+  async function maybeRecord(settleMs = 0): Promise<void> {
     if (recordTried) return;
     recordTried = true;
     const result = toGameResult(state);
@@ -59,11 +65,14 @@ export function renderPlayView(ctx: Ctx, root: HTMLElement): void {
       ctx.pendingRecord = result; // record after sign-in
       return;
     }
+    const settle = settleMs > 0 ? new Promise((r) => setTimeout(r, settleMs)) : Promise.resolve();
     try {
       const stats = await recordCompletedGame(ctx.session, result);
       statsCache.set(ctx.lang, stats);
+      await settle; // let the reveal play out before rebuilding the board
       toast(t(ctx.lang).savedToPds);
     } catch {
+      await settle;
       toast(t(ctx.lang).constellationDown);
     }
     renderContent();
@@ -85,7 +94,9 @@ export function renderPlayView(ctx: Ctx, root: HTMLElement): void {
     pending = '';
     animateRow = state.guesses.length - 1; // flip only the row we just submitted
     renderContent();
-    if (isFinished(state)) void maybeRecord();
+    // The just-submitted row is mid-reveal; hold the post-save re-render until
+    // it finishes (skipped when the user prefers reduced motion).
+    if (isFinished(state)) void maybeRecord(reducedMotion() ? 0 : REVEAL_DURATION_MS);
   }
 
   function typeLetter(ch: string): void {

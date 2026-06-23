@@ -28,6 +28,14 @@ const STATE_LABEL: Record<TileState, Record<Lang, string>> = {
  */
 /** Delay between consecutive tile flips on a freshly-submitted row, in ms. */
 const REVEAL_STEP_MS = 300;
+/** Duration of a single tile flip, in ms — must match the `flip` rule in theme.css. */
+const REVEAL_FLIP_MS = 500;
+/**
+ * Total time the staggered reveal takes: the last tile starts after every
+ * earlier tile's step, then runs one full flip. Callers use this to avoid
+ * rebuilding the board (which would snap the in-flight tiles) before it ends.
+ */
+export const REVEAL_DURATION_MS = REVEAL_STEP_MS * (WORD_LENGTH - 1) + REVEAL_FLIP_MS;
 
 export function renderBoard(state: GameState, pending: string, animateRow = -1): HTMLElement {
   const rows = scoredRows(state);
