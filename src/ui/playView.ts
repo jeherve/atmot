@@ -222,12 +222,15 @@ export function renderPlayView(ctx: Ctx, root: HTMLElement): void {
     animateRow = -1; // one-shot: consumed by this render only
     if (isFinished(state)) {
       children.push(resultsPanel());
-    } else if (!ctx.session) {
-      children.push(signInBar(ctx, t(ctx.lang).signInPrompt));
+    } else {
+      if (!ctx.session) {
+        children.push(signInBar(ctx, t(ctx.lang).signInPrompt));
+      }
+      // Hide the on-screen keyboard once the game is over — there's nothing left to type.
+      children.push(
+        renderKeyboard(state, ctx.lang, { onLetter: typeLetter, onEnter: submit, onBackspace: backspace }),
+      );
     }
-    children.push(
-      renderKeyboard(state, ctx.lang, { onLetter: typeLetter, onEnter: submit, onBackspace: backspace }),
-    );
     mount(main, ...children);
   }
 
