@@ -226,7 +226,7 @@ export function renderPlayView(ctx: Ctx, root: HTMLElement): void {
       children.push(signInBar(ctx, t(ctx.lang).signInPrompt));
     }
     children.push(
-      renderKeyboard(state, { onLetter: typeLetter, onEnter: submit, onBackspace: backspace }),
+      renderKeyboard(state, ctx.lang, { onLetter: typeLetter, onEnter: submit, onBackspace: backspace }),
     );
     mount(main, ...children);
   }
