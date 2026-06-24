@@ -25,8 +25,7 @@ documented interpretation was needed.
 
 4. **Sources:** English dictionary = **ENABLE** (Public Domain); French dictionary =
    **an-array-of-french-words** (MIT); commonness ranking for both = **hermitdave/FrequencyWords**
-   (MIT, OpenSubtitles). The French list is sourced independently with **no relation to** the
-   `wordle-fr` / “Le Mot” project, as required.
+   (MIT, OpenSubtitles).
 
 5. **Validity vs. commonness are separated.** Frequency lists alone leak proper nouns, foreign
    words, and apostrophe-mangled contraction fragments. So the *dictionary* decides validity and the
@@ -66,11 +65,11 @@ documented interpretation was needed.
 
 ## Design
 
-12. **Type = Overused Grotesk (display/body) + IBM Plex Mono (data/provenance)** — the exact
-    skypress.blog stack, self-hosted (both OFL).
+12. **Type = Overused Grotesk (display/body) + IBM Plex Mono (data/provenance)**, self-hosted
+    (both OFL).
 
 13. **Board palette:** teal `#0F766E` (correct), burnt amber `#B45309` (present), slate `#5B6776`
-    (absent) — deliberately not Wordle's green/yellow. The same saturated chips are used in both
+    (absent). The same saturated chips are used in both
     light and dark themes, which guarantees AA contrast for the white tile letters in either theme.
     Secondary non-hue cue: an inner ring on "present" tiles plus per-tile aria labels announcing the
     state, so colour-blind and screen-reader players read the board clearly. The shared emoji grid
@@ -95,24 +94,16 @@ documented interpretation was needed.
 
 ## Tooling
 
-18. **Dev tooling (Vite/Vitest) bumped to latest majors** to clear all `npm audit` advisories
-    (currently **0 vulnerabilities**). The advisories were dev-server-only (esbuild), never in
-    shipped code.
+18. **Dev tooling (Vite/Vitest) bumped to latest majors** to clear all `npm audit` advisories. The
+    advisories were dev-server-only (esbuild), never in shipped code.
 
 19. **atcute versions:** `@atcute/client@^5`, `@atcute/oauth-browser-client@^4`,
     `@atcute/identity-resolver@^2` (newer than the spec's illustrative snippets; the API used is
     equivalent).
 
-## Handoff note
-
-20. **No git remote is configured.** Everything is committed to the **`trunk`** branch, which is the
-    repository's current/default branch locally (HEAD points at it). Creating a remote and marking
-    `trunk` as the default branch *on the host* (GitHub/Tangled/etc.) is a one-step manual action for
-    the owner, since no remote exists to push to yet.
-
 ## PWA / installability
 
-21. **Manifest-only PWA — deliberately no service worker.** The app is installable
+20. **Manifest-only PWA — deliberately no service worker.** The app is installable
     to the home screen via `public/manifest.webmanifest` + committed PNG icons
     (rasterized once from `icon.svg`, flattened onto `#0e1116`) + apple/mobile
     web-app meta tags. There is intentionally **no service worker and no caching

@@ -45,7 +45,6 @@ interface Strings {
   backToGame: string;
   langName: string;
   about: string;
-  sourceCode: string;
   profile: string;
 }
 
@@ -97,7 +96,6 @@ const EN: Strings = {
   backToGame: 'Back to today’s game',
   langName: 'English',
   about: 'About',
-  sourceCode: 'Source code on tangled.org',
   profile: '@jeremy.herve.bzh on Bluesky',
 };
 
@@ -149,7 +147,6 @@ const FR: Strings = {
   backToGame: 'Retour au mot du jour',
   langName: 'Français',
   about: 'À propos',
-  sourceCode: 'Code source sur tangled.org',
   profile: '@jeremy.herve.bzh sur Bluesky',
 };
 

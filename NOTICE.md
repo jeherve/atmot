@@ -13,9 +13,6 @@ third-party assets, each under its own license.
 - **hermitdave/FrequencyWords** — English & French commonness ranking (OpenSubtitles).
   Source: <https://github.com/hermitdave/FrequencyWords>. **MIT** © Hermit Dave.
 
-The French list is sourced independently and has no relation to, and reuses no code or data from,
-the `wordle-fr` / “Le Mot” project.
-
 ## Fonts (bundled in `public/fonts/`)
 
 - **Overused Grotesk** (`OverusedGrotesk-VF.woff2`).
@@ -23,8 +20,7 @@ the `wordle-fr` / “Le Mot” project.
 - **IBM Plex Mono** (`ibm-plex-mono-latin-*.woff2`).
   By IBM. **SIL Open Font License 1.1.** <https://github.com/IBM/plex>
 
-These match the typography of [skypress.blog](https://skypress.blog) for family consistency across
-the author's properties. Both are OFL-licensed and freely redistributable.
+Both are OFL-licensed and freely redistributable.
 
 ## Runtime dependencies
 
