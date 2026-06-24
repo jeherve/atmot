@@ -18,6 +18,7 @@ import { writeFileSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { normalizeWord } from '../src/engine/normalize.ts';
+import { encodeAnswers } from '../src/engine/obfuscate.ts';
 import { isInflectedSForm } from './plurals.ts';
 import frenchDictionary from 'an-array-of-french-words' with { type: 'json' };
 
@@ -93,7 +94,21 @@ interface WordList {
 function write(list: WordList): void {
   mkdirSync(DATA_DIR, { recursive: true });
   const file = resolve(DATA_DIR, `words.${list.lang}.json`);
-  writeFileSync(file, JSON.stringify(list, null, 0) + '\n');
+  // The ordered answer sequence ships obfuscated (a deliberate speed bump, not
+  // encryption — see src/engine/obfuscate.ts) so the daily word isn't readable
+  // in plaintext in the bundle or the repo. `answersEnc` decodes back to the
+  // identical ordered list, so the per-day mapping is unchanged.
+  const out = {
+    lang: list.lang,
+    source: list.source,
+    license: list.license,
+    wordLength: list.wordLength,
+    counts: list.counts,
+    answersEnc: encodeAnswers(list.answers),
+    allowed: list.allowed,
+    ...(list.accents ? { accents: list.accents } : {}),
+  };
+  writeFileSync(file, JSON.stringify(out, null, 0) + '\n');
   console.log(
     `words.${list.lang}.json: ${list.counts.answers} answers, ${list.counts.allowed} allowed`,
   );

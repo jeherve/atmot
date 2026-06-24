@@ -52,6 +52,20 @@ describe('deterministic daily selection (cross-client agreement)', () => {
     for (let n = 1; n <= 20; n++) if (dailyAnswer('en', n) !== dailyAnswer('fr', n)) differ++;
     expect(differ).toBeGreaterThan(15);
   });
+
+  // History-safety guard: these puzzle->word pairs are already live. Obfuscating
+  // the shipped answer list MUST decode back to byte-identical words, or players'
+  // recorded results (keyed by <lang>-<puzzleNumber>) and in-progress games would
+  // no longer match. If this test ever changes, history has been renumbered.
+  it('maps known puzzle numbers to their established words', () => {
+    expect(dailyAnswer('en', 1)).toBe('DRAMA');
+    expect(dailyAnswer('en', 2)).toBe('SMITH');
+    expect(dailyAnswer('en', 3)).toBe('LACEY');
+    expect(dailyAnswer('en', 2500)).toBe('JOKER');
+    expect(dailyAnswer('fr', 1)).toBe('KOALA');
+    expect(dailyAnswer('fr', 2)).toBe('FLEAU');
+    expect(dailyAnswer('fr', 3)).toBe('LIGUE');
+  });
 });
 
 describe('guess validation', () => {

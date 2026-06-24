@@ -1,5 +1,6 @@
 import { LANGS, type Lang } from '../config.js';
 import { normalizeWord } from './normalize.js';
+import { decodeAnswers } from './obfuscate.js';
 import enData from '../data/words.en.json';
 import frData from '../data/words.fr.json';
 
@@ -14,9 +15,20 @@ export interface WordList {
   accents?: Record<string, string>;
 }
 
+/** Shape of the shipped JSON: the answer sequence is obfuscated (see obfuscate.ts). */
+interface RawWordData extends Omit<WordList, 'answers'> {
+  answersEnc: string;
+}
+
+/** Decode the obfuscated answer sequence once, at module load. */
+function hydrate(raw: RawWordData): WordList {
+  const { answersEnc, ...rest } = raw;
+  return { ...rest, answers: decodeAnswers(answersEnc) };
+}
+
 const DATA: Record<Lang, WordList> = {
-  en: enData as WordList,
-  fr: frData as WordList,
+  en: hydrate(enData as RawWordData),
+  fr: hydrate(frData as RawWordData),
 };
 
 // Build allowed-guess sets once. Answers are always valid guesses too.

@@ -103,6 +103,27 @@ documented interpretation was needed.
     `@atcute/identity-resolver@^2` (newer than the spec's illustrative snippets; the API used is
     equivalent).
 
+## Anti-cheat
+
+22. **The daily-answer sequence ships obfuscated, not in plaintext.** The ordered
+    `answers` array used to ship as plain English words, so anyone could open the
+    JSON (in the repo or the JS bundle / network tab), find their puzzle number,
+    and read today's — or any future day's — word. It now ships as `answersEnc`:
+    the ordered list joined, XOR'd against a fixed key, and base64-encoded
+    (`src/engine/obfuscate.ts`), decoded once at module load in `words.ts`.
+    This is a deliberate **speed bump, not encryption** — with no backend, the full
+    list must reach every browser to compute the word offline, and the XOR key
+    ships in the bundle, so a determined reader can still recover it. The goal is
+    only to defeat the trivial "read the list / grep for the word" cheat. The
+    encoding decodes back to **byte-identical** words, so the per-puzzle mapping is
+    unchanged — recorded results (keyed by `<lang>-<puzzleNumber>`) and in-progress
+    local games from before the change still match. `tests/words.test.ts` pins
+    known puzzle→word pairs as a history-safety guard. Two accepted limits: (a) the
+    `allowed` guess dictionary stays plaintext (it's the public valid-word set and
+    reveals no day mapping); (b) French answer words that carry accents remain
+    individually visible as keys in the plaintext `accents` display map — but not
+    their day-order, so the daily mapping stays hidden.
+
 ## Handoff note
 
 20. **No git remote is configured.** Everything is committed to the **`trunk`** branch, which is the

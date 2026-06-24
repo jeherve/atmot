@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { isInflectedSForm } from '../scripts/plurals.js';
+import { decodeAnswers } from '../src/engine/obfuscate.js';
 import enData from '../src/data/words.en.json';
 
 // A tiny dictionary covering every length, the way ENABLE does. The bug was that
@@ -42,7 +43,8 @@ describe('isInflectedSForm', () => {
 });
 
 describe('shipped EN answer pool excludes obvious plurals (regression)', () => {
-  const answers = new Set(enData.answers);
+  const answerList = decodeAnswers(enData.answersEnc);
+  const answers = new Set(answerList);
 
   for (const plural of ['ROOMS', 'CARDS', 'MOVES', 'KINGS', 'BOXES', 'FLIES', 'ASHES']) {
     it(`does not use "${plural}" as a daily answer`, () => {
@@ -51,7 +53,7 @@ describe('shipped EN answer pool excludes obvious plurals (regression)', () => {
   }
 
   it('keeps -S plurals to under 5% of the answer pool', () => {
-    const endingInS = enData.answers.filter((w) => w.endsWith('S')).length;
-    expect(endingInS / enData.answers.length).toBeLessThan(0.05);
+    const endingInS = answerList.filter((w) => w.endsWith('S')).length;
+    expect(endingInS / answerList.length).toBeLessThan(0.05);
   });
 });
