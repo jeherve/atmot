@@ -18,16 +18,19 @@ function makeCtx(): Ctx {
 }
 
 describe('renderFooter', () => {
-  it('links to the source repo and the Bluesky profile', () => {
+  it('links to the Bluesky profile', () => {
     const footer = renderFooter(makeCtx());
     const hrefs = [...footer.querySelectorAll('a')].map((a) => a.getAttribute('href'));
-    expect(hrefs).toContain('https://tangled.org/jeremy.herve.bzh/atmot');
     expect(hrefs).toContain('https://bsky.app/profile/jeremy.herve.bzh');
   });
 
-  it('renders the tangled mark inline and the avatar as an image', () => {
+  it('does not link out to the source repository', () => {
     const footer = renderFooter(makeCtx());
-    expect(footer.querySelector('a[href*="tangled.org"] svg')).not.toBeNull();
+    expect(footer.querySelector('a[href*="tangled.org"]')).toBeNull();
+  });
+
+  it('renders the avatar as an image', () => {
+    const footer = renderFooter(makeCtx());
     const avatar = footer.querySelector('a[href*="bsky.app"] img');
     expect(avatar?.getAttribute('src')).toBe('/jeremy-herve.svg');
   });
