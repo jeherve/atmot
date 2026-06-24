@@ -38,5 +38,5 @@ export function encodeAnswers(words: readonly string[]): string {
 
 /** Decode a blob produced by {@link encodeAnswers} back to the original words. */
 export function decodeAnswers(blob: string): string[] {
-  return xor(atob(blob)).split(SEPARATOR);
+  return blob === '' ? [] : xor(atob(blob)).split(SEPARATOR);
 }

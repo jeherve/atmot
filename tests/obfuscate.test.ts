@@ -12,6 +12,10 @@ describe('answer-list obfuscation', () => {
     expect(encodeAnswers(sample)).toBe(encodeAnswers(sample));
   });
 
+  it('round-trips an empty list back to an empty list (not [""])', () => {
+    expect(decodeAnswers(encodeAnswers([]))).toEqual([]);
+  });
+
   it('produces an ASCII base64 string (safe to embed in JSON / a JS bundle)', () => {
     const blob = encodeAnswers(sample);
     expect(typeof blob).toBe('string');
