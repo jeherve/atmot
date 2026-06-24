@@ -130,7 +130,7 @@ export const MAX_GUESSES = 6;
 export const CONSTELLATION_BASE = 'https://constellation.microcosm.blue';
 
 /** Sent on every Constellation request (microcosm asks for a descriptive UA + contact). */
-export const USER_AGENT = `atmot/1.0 (+${ORIGIN}; word game; contact jeremy@jeherve.com)`;
+export const USER_AGENT = `atmot/1.0 (+${ORIGIN}; word game; https://tangled.org/jeremy.herve.bzh/atmot)`;
 
 /** Handle/identity resolution endpoint (Bluesky AppView; web apps lack DNS access). */
 export const APPVIEW_URL = 'https://public.api.bsky.app';
