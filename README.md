@@ -104,6 +104,10 @@ npm run build       # typecheck + production build into dist/
 OAuth in dev uses atproto's loopback client (no hosted metadata needed). In production the SPA serves
 `/client-metadata.json`, and `client_id` equals that exact URL.
 
+AT Mot requests **granular OAuth scopes** (least privilege) rather than the broad `transition:generic`
+— write access is limited to exactly the three collections it creates: `bzh.herve.atmot.result`,
+`bzh.herve.atmot.stats`, and `app.bsky.feed.post`. See DECISIONS.md (#17b).
+
 ## Deploy (Cloudflare Pages)
 
 The git remote lives on [tangled.org](https://tangled.org), so Cloudflare's git-connected builds
