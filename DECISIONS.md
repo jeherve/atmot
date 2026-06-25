@@ -68,15 +68,37 @@ documented interpretation was needed.
 12. **Type = Overused Grotesk (display/body) + IBM Plex Mono (data/provenance)**, self-hosted
     (both OFL).
 
-13. **Board palette:** teal `#0F766E` (correct), burnt amber `#B45309` (present), slate `#5B6776`
-    (absent). The same saturated chips are used in both
-    light and dark themes, which guarantees AA contrast for the white tile letters in either theme.
-    Secondary non-hue cue: an inner ring on "present" tiles plus per-tile aria labels announcing the
-    state, so colour-blind and screen-reader players read the board clearly. The shared emoji grid
-    stays standard `🟩🟨⬛`.
+13. **Board palette:** teal `#0F766E` (correct), gold `#A16207` (present), recessive slate (absent).
+    Deliberately distinct from the usual green/yellow word-game scheme. Two refinements came out of early player feedback:
+    the present colour was nudged from the original
+    burnt amber `#B45309` (which read as *red* — the classic red/green colour-blind trap) to a clearer
+    gold; and the absent tone is now **theme-aware and shared with the keyboard** (light: slate
+    `#5B6776`; dark: `#232B35`) so the "not in word" state looks identical on the board tile, the
+    keyboard key, and the legend. The dark absent stays readable as a tile yet recessive. Per-tile
+    aria labels announce the state regardless of colour. The shared emoji grid stays standard
+    `🟩🟨⬛`.
+
+13a. **Colour-blind mode is opt-in, off by default.** Rather than always drawing a corner glyph
+    (`✓` right spot / `○` wrong spot / `✕` not in word) — which read as visual clutter — the glyphs
+    appear only when the player enables "Colour-blind mode" from a footer toggle. The preference is
+    stored in `localStorage` and applied as a `cb-safe` class on `<html>`; the glyph CSS keys off
+    that class, so it lights up the board, the legend, and the help-modal examples at once. The
+    first-visit help modal points colour-blind players at the toggle (only while it's still off).
+
+13b. **Onboarding: a persistent legend + a first-visit help modal.** New players had no way to learn
+    what the colours mean (also from the same feedback). A compact colour/symbol legend sits under the
+    board during play; a `?` header button opens a native `<dialog>` "How to play" with worked
+    examples, shown automatically once on first visit (guarded by `localStorage`) and re-openable any
+    time. Original copy, bilingual, no login/email upsell.
 
 14. **Dark mode follows `prefers-color-scheme` only** (no toggle), via semantic CSS custom
     properties, per spec.
+
+14a. **Keyboard keys: grey when untried, dark when ruled out.** The original
+    keyboard did the opposite in dark mode — untried keys were dark and a tried-absent key turned a
+    *lighter* slate. Untried keys are now a clear neutral grey (`#3A424F` in dark) and an absent key
+    drops to the recessive shared "not in word" tone (darker than untried), so eliminated letters
+    recede instead of standing out. Correct/present keys keep the board's teal/gold.
 
 15. **Vanilla TypeScript, no UI framework** — keeps the static bundle tiny (~94 KB gzip), matching
     the "lightest fit for a client-side game" rationale behind choosing atcute.

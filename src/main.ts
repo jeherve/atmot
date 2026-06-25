@@ -14,9 +14,13 @@ import type { Ctx } from './ui/context.js';
 import { renderPlayView } from './ui/playView.js';
 import { renderPuzzlePage } from './ui/puzzlePage.js';
 import { renderAboutPage } from './ui/aboutPage.js';
+import { initColorBlind } from './ui/colorblind.js';
 import { toast } from './ui/toast.js';
 
 const root = document.getElementById('app')!;
+
+// Apply the saved colour-blind preference before the first render.
+initColorBlind();
 
 const LANG_KEY = 'atmot:lang';
 function initialLang(): Lang {

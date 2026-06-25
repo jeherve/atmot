@@ -15,6 +15,8 @@ import { toast } from './toast.js';
 import { renderHeader, navTo } from './header.js';
 import { renderFooter } from './footer.js';
 import { renderBoard, REVEAL_DURATION_MS } from './board.js';
+import { renderLegend } from './legend.js';
+import { maybeShowFirstVisitHelp } from './help.js';
 import { renderKeyboard } from './keyboard.js';
 import { renderDistribution, renderShareGrid, renderCountdown, stopCountdown } from './widgets.js';
 import type { Ctx } from './context.js';
@@ -223,6 +225,9 @@ export function renderPlayView(ctx: Ctx, root: HTMLElement): void {
     if (isFinished(state)) {
       children.push(resultsPanel());
     } else {
+      // A compact colour/symbol key under the board, so the tiles are readable
+      // without opening the help modal.
+      children.push(renderLegend(ctx.lang));
       if (!ctx.session) {
         children.push(signInBar(ctx, t(ctx.lang).signInPrompt));
       }
@@ -247,6 +252,9 @@ export function renderPlayView(ctx: Ctx, root: HTMLElement): void {
 
   rerenderApp();
   renderContent();
+
+  // First-time visitors get the "How to play" modal once (guarded by localStorage).
+  maybeShowFirstVisitHelp(ctx.lang);
 
   // If we arrived already-finished with a session, record once.
   if (isFinished(state) && ctx.session && !recordTried) void maybeRecord();
