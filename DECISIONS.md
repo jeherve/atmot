@@ -92,6 +92,25 @@ documented interpretation was needed.
     from the hash params on load. Dev uses atproto's loopback client via a Vite plugin (no hosted
     metadata needed locally).
 
+17b. **Granular OAuth scopes — no `transition:generic`.** The client requests exactly the writes it
+    performs, nothing more:
+
+    ```
+    atproto
+    repo:bzh.herve.atmot.result?action=create
+    repo:bzh.herve.atmot.stats?action=create&action=update
+    repo:app.bsky.feed.post?action=create
+    ```
+
+    This is least-privilege (the app can never touch any other collection in your repo) and gives a
+    clearer consent screen than the broad `transition:generic`. Verified end-to-end against a
+    self-hosted reference PDS (v0.4.5006): PAR → consent (rendered as "Repository: Publish changes" +
+    "Bluesky") → token granted with the exact scope → `createRecord`/`putRecord` all succeed. `repo:`
+    alone authorizes the `com.atproto.repo.*` write calls; no separate `rpc:` scope is needed. Reads
+    (leaderboard, own records) need no scope at all. Trade-off: a PDS too old to parse granular scopes
+    would reject authorization outright — acceptable, since `transition:*` scopes are themselves slated
+    for deprecation and the reference implementation supports granular today.
+
 ## Tooling
 
 18. **Dev tooling (Vite/Vitest) bumped to latest majors** to clear all `npm audit` advisories. The
