@@ -1,8 +1,7 @@
 /**
  * build-wordlists.ts — generate the per-language word lists shipped with AT Mot.
  *
- * Sources (both license-clean and deliberately NOT derived from the
- * wordle-fr / "Le Mot" project):
+ * Sources (both license-clean and independently sourced):
  *   - English dictionary: ENABLE word list — public domain.
  *   - French dictionary + both commonness rankings: hermitdave/FrequencyWords
  *     (OpenSubtitles frequency lists) — MIT licensed.
@@ -221,7 +220,7 @@ async function buildFrench(): Promise<void> {
     source:
       'Dictionary: an-array-of-french-words (https://github.com/words/an-array-of-french-words). ' +
       'Commonness ranking: hermitdave/FrequencyWords fr_50k (OpenSubtitles). ' +
-      'Independently sourced — no relation to the wordle-fr / "Le Mot" project.',
+      'Independently sourced.',
     license: 'Dictionary: MIT. Frequency ranking: MIT.',
     wordLength: WORD_LENGTH,
     counts: { answers: answers.length, allowed: allowed.length },
