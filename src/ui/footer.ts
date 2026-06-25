@@ -1,6 +1,7 @@
 import { t } from '../i18n.js';
 import { el } from './dom.js';
 import { navTo } from './header.js';
+import { colorBlindEnabled, setColorBlind } from './colorblind.js';
 import type { Ctx } from './context.js';
 
 const PROFILE_URL = 'https://bsky.app/profile/jeremy.herve.bzh';
@@ -19,11 +20,28 @@ export function renderFooter(ctx: Ctx, puzzleNumber?: number): HTMLElement {
     );
   }
 
+  const cbToggle = el(
+    'button',
+    {
+      class: 'cb-toggle',
+      type: 'button',
+      'aria-pressed': String(colorBlindEnabled()),
+      title: t(ctx.lang).colorBlindMode,
+    },
+    t(ctx.lang).colorBlindMode,
+  );
+  cbToggle.addEventListener('click', () => {
+    const next = !colorBlindEnabled();
+    setColorBlind(next);
+    cbToggle.setAttribute('aria-pressed', String(next));
+  });
+
   lines.push(
     el(
       'div',
       { class: 'line links', style: puzzleNumber != null ? 'margin-top:6px' : undefined },
       el('a', { href: '/about', onClick: navTo(ctx, '/about') }, t(ctx.lang).about),
+      cbToggle,
       el('span', { class: 'spacer' }),
       el(
         'a',

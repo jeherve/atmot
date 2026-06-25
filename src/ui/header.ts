@@ -1,6 +1,7 @@
 import { LANGS } from '../config.js';
 import { t } from '../i18n.js';
 import { el } from './dom.js';
+import { openHelp } from './help.js';
 import type { Ctx } from './context.js';
 
 export function renderHeader(ctx: Ctx): HTMLElement {
@@ -18,7 +19,19 @@ export function renderHeader(ctx: Ctx): HTMLElement {
     );
   }
 
-  const actions = el('div', { class: 'bar-actions' }, langswitch);
+  const help = el(
+    'button',
+    {
+      class: 'btn small icon',
+      type: 'button',
+      title: t(ctx.lang).helpOpen,
+      ariaLabel: t(ctx.lang).helpOpen,
+      onClick: () => openHelp(ctx.lang),
+    },
+    '?',
+  );
+
+  const actions = el('div', { class: 'bar-actions' }, help, langswitch);
 
   if (ctx.session) {
     const who = ctx.handle ? `@${ctx.handle}` : 'signed in';

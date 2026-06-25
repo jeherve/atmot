@@ -3,9 +3,13 @@
    Direction: clean minimal-nerdy (Linear / atproto-docs feel).
    Type: Overused Grotesk (display+body) + IBM Plex Mono (data/provenance),
    matching skypress.blog. Dark mode follows prefers-color-scheme only.
-   Board uses AT Mot's OWN brand palette (teal correct / amber present /
-   slate absent) — deliberately NOT Wordle's green/yellow. The shared emoji
-   grid (standard squares) is unaffected.
+   Board uses AT Mot's OWN brand palette (teal correct / gold present /
+   recessive slate absent — the absent tone is theme-aware and shared with the
+   keyboard's "ruled out" key) — deliberately distinct from the usual green/yellow
+   word-game scheme. Each state also
+   carries a non-colour glyph (✓ / ○ / ✕) so the result is legible without
+   relying on hue (colour-blind safe). The shared emoji grid (standard
+   squares) is unaffected.
    =========================================================================== */
 
 @font-face {
@@ -48,14 +52,19 @@
   /* Brand tile palette — saturated chips that read on either background, each
      meeting AA with white text. Same in both themes for guaranteed contrast. */
   --tile-correct: #0f766e; /* teal */
-  --tile-present: #b45309; /* burnt amber (clearly not Wordle yellow) */
+  --tile-present: #a16207; /* gold (warm, reads clearly not red) */
   --tile-absent: #5b6776; /* slate */
   --tile-fg: #ffffff;
   --tile-empty-border: #c7cfda;
   --tile-edge: #2b3340; /* outline on a filled-but-unsubmitted tile */
 
+  /* Keyboard: untried keys read as a neutral grey; a key turns dark + recedes
+     once it's been tried and ruled out (absent) — the opposite of a tried key
+     getting lighter. correct/present keep the board's teal/gold. */
   --key-bg: #e4e9f0;
   --key-fg: #11161d;
+  --key-absent: #5b6776;
+  --key-absent-fg: #ffffff;
 
   --radius: 10px;
   --radius-sm: 7px;
@@ -75,8 +84,14 @@
     --accent-fg: #06101d;
     --tile-empty-border: #39424e;
     --tile-edge: #5b6776;
-    --key-bg: #232b35;
+    /* "Not in word" is one recessive dark tone shared by the board tile and the
+       keyboard key, yet still lighter than the page so the tile stays readable
+       and darker than an untried key so the keyboard reads as "ruled out". */
+    --tile-absent: #232b35;
+    --key-bg: #3a424f; /* clear grey: an untried, still-available key */
     --key-fg: #e6eaf0;
+    --key-absent: #232b35; /* matches the board's "not in word" tile */
+    --key-absent-fg: #9aa7b5;
   }
 }
 
@@ -273,6 +288,7 @@ main {
   border-radius: var(--radius-sm);
   color: var(--fg);
   user-select: none;
+  position: relative;
 }
 @media (max-width: 380px) {
   .tile {
@@ -290,27 +306,68 @@ main {
 .tile.absent {
   color: var(--tile-fg);
   border-color: transparent;
-  /* --reveal-bg / --reveal-ring carry the destination colour so the flip
-     keyframe can apply it at the midpoint; static rows just use them directly. */
+  /* --reveal-bg carries the destination colour so the flip keyframe can apply
+     it at the midpoint; static rows just use it directly. */
   background: var(--reveal-bg);
-  box-shadow: var(--reveal-ring, none);
 }
 .tile.correct {
   --reveal-bg: var(--tile-correct);
 }
 .tile.present {
   --reveal-bg: var(--tile-present);
-  /* secondary non-hue cue: inner ring distinguishes present from correct */
-  --reveal-ring: inset 0 0 0 2px rgba(255, 255, 255, 0.45);
 }
 .tile.absent {
   --reveal-bg: var(--tile-absent);
 }
+
+/* Non-colour cue (opt-in via "Colour-blind mode" — the `cb-safe` class on
+   <html>): a small corner glyph on every scored tile, so the three states stay
+   distinguishable without relying on hue. ✓ right spot, ○ wrong spot, ✕ not in
+   word — mirrored by the on-board legend and the help modal. Off by default so
+   the glyphs don't clutter the board for players who don't need them. */
+.cb-safe .tile.correct::after,
+.cb-safe .tile.present::after,
+.cb-safe .tile.absent::after {
+  position: absolute;
+  top: 3px;
+  left: 5px;
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.92);
+  pointer-events: none;
+}
+.cb-safe .tile.correct::after {
+  content: '✓';
+}
+.cb-safe .tile.present::after {
+  content: '○';
+}
+.cb-safe .tile.absent::after {
+  content: '✕';
+}
+
 /* Freshly-submitted row: flip each tile in turn (delay set per tile in board.ts)
    and keep the colour hidden until the tile is edge-on at the flip's midpoint. */
 .tile.reveal {
   animation: flip 0.5s ease both;
   animation-delay: var(--reveal-delay, 0ms);
+}
+/* Keep the corner glyph hidden until the flip reaches its midpoint, so it
+   reveals together with the colour rather than spoiling the pre-flip tile. */
+.cb-safe .tile.reveal::after {
+  animation: glyph-reveal 0.5s ease both;
+  animation-delay: var(--reveal-delay, 0ms);
+}
+@keyframes glyph-reveal {
+  0%,
+  50% {
+    opacity: 0;
+  }
+  50.01%,
+  100% {
+    opacity: 1;
+  }
 }
 
 @keyframes pop {
@@ -327,27 +384,23 @@ main {
     background: transparent;
     border-color: var(--tile-edge);
     color: var(--fg);
-    box-shadow: none;
   }
   50% {
     transform: rotateX(90deg);
     background: transparent;
     border-color: var(--tile-edge);
     color: var(--fg);
-    box-shadow: none;
   }
   50.01% {
     background: var(--reveal-bg);
     border-color: transparent;
     color: var(--tile-fg);
-    box-shadow: var(--reveal-ring, none);
   }
   100% {
     transform: rotateX(0);
     background: var(--reveal-bg);
     border-color: transparent;
     color: var(--tile-fg);
-    box-shadow: var(--reveal-ring, none);
   }
 }
 .row-shake {
@@ -417,9 +470,8 @@ main {
   color: var(--tile-fg);
 }
 .key.absent {
-  background: var(--tile-absent);
-  color: var(--tile-fg);
-  opacity: 0.85;
+  background: var(--key-absent);
+  color: var(--key-absent-fg);
 }
 
 /* ---- cards / panels ------------------------------------------------------- */
@@ -572,6 +624,123 @@ p {
   gap: 14px;
 }
 
+/* ---- legend (on-board colour/symbol key) ---------------------------------- */
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 16px;
+  margin: 2px 0 12px;
+  font-size: 13px;
+  color: var(--fg-muted);
+}
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.legend .tile {
+  width: 26px;
+  height: 26px;
+  font-size: 14px;
+  border-width: 2px;
+  animation: none;
+}
+.cb-safe .legend .tile.correct::after,
+.cb-safe .legend .tile.present::after,
+.cb-safe .legend .tile.absent::after {
+  font-size: 8px;
+  top: 1px;
+  left: 2px;
+}
+
+/* ---- help modal ----------------------------------------------------------- */
+
+.btn.icon {
+  width: 34px;
+  padding: 6px 0;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+dialog.help {
+  width: min(440px, calc(100vw - 32px));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--fg);
+  padding: 22px 22px 24px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+}
+dialog.help::backdrop {
+  background: rgba(8, 12, 18, 0.55);
+}
+.help-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.help-head h2 {
+  margin: 0;
+}
+.help-close {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--fg-muted);
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+.help-close:hover {
+  color: var(--fg);
+}
+.help ul {
+  margin: 10px 0 18px;
+  padding-left: 20px;
+}
+.help ul li {
+  margin: 4px 0;
+}
+.help-examples {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.help-example .board-row {
+  display: grid;
+  grid-template-columns: repeat(5, 36px);
+  gap: 5px;
+  margin-bottom: 6px;
+}
+.help-example .tile {
+  width: 36px;
+  height: 36px;
+  font-size: 19px;
+  animation: none;
+}
+.cb-safe .help-example .tile.correct::after,
+.cb-safe .help-example .tile.present::after,
+.cb-safe .help-example .tile.absent::after {
+  font-size: 9px;
+  top: 2px;
+  left: 3px;
+}
+.help-example .caption {
+  font-size: 14px;
+  color: var(--fg-muted);
+}
+.help-hint {
+  font-size: 13px;
+  color: var(--fg-muted);
+  margin: 16px 0 0;
+}
+
 /* ---- toast ---------------------------------------------------------------- */
 
 .toast-wrap {
@@ -646,6 +815,40 @@ footer.status .iconlink .avatar {
   height: 18px;
   border-radius: 50%;
   display: block;
+}
+
+/* Colour-blind mode toggle (footer). The leading glyph doubles as a preview of
+   what the mode does: a hollow ○ when off, a filled ✓ when on. */
+.cb-toggle {
+  appearance: none;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--fg-muted);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px 9px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.cb-toggle::before {
+  content: '○';
+  font-size: 11px;
+  line-height: 1;
+}
+.cb-toggle:hover {
+  color: var(--fg);
+  border-color: var(--fg-muted);
+}
+.cb-toggle[aria-pressed='true'] {
+  color: var(--fg);
+  border-color: var(--tile-correct);
+}
+.cb-toggle[aria-pressed='true']::before {
+  content: '✓';
+  color: var(--tile-correct);
 }
 
 .center {

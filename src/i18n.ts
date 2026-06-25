@@ -1,4 +1,15 @@
 import type { Lang } from './config.js';
+import type { TileState } from './engine/types.js';
+
+/** A worked example shown in the "How to play" modal: a sample word with one
+ *  tile highlighted in a given state, plus a caption explaining that state. */
+export interface HowToExample {
+  word: string;
+  /** Index (0–4) of the highlighted tile within `word`. */
+  index: number;
+  state: TileState;
+  caption: string;
+}
 
 /** UI copy, per language. Keys are stable; values are end-user facing. */
 interface Strings {
@@ -6,6 +17,14 @@ interface Strings {
   play: string;
   howToTitle: string;
   howTo: string[];
+  howToExamples: HowToExample[];
+  helpOpen: string;
+  helpClose: string;
+  helpColorBlindHint: string;
+  colorBlindMode: string;
+  legendCorrect: string;
+  legendPresent: string;
+  legendAbsent: string;
   signIn: string;
   signInPrompt: string;
   signInPlaceholder: string;
@@ -55,8 +74,20 @@ const EN: Strings = {
   howTo: [
     'Guess the 5-letter word in 6 tries.',
     'Each guess must be a real word.',
-    'Tiles show how close you were: right letter & spot, right letter wrong spot, or not in the word.',
+    'After each guess, the tiles change colour to show how close you were.',
   ],
+  howToExamples: [
+    { word: 'CRANE', index: 0, state: 'correct', caption: 'C is in the word and in the right spot.' },
+    { word: 'TABLE', index: 1, state: 'present', caption: 'A is in the word but in the wrong spot.' },
+    { word: 'MOIST', index: 0, state: 'absent', caption: 'M is not in the word.' },
+  ],
+  helpOpen: 'How to play',
+  helpClose: 'Close',
+  helpColorBlindHint: 'Colour-blind? Turn on “Colour-blind mode” in the footer to add a symbol to each tile.',
+  colorBlindMode: 'Colour-blind mode',
+  legendCorrect: 'Right spot',
+  legendPresent: 'Wrong spot',
+  legendAbsent: 'Not in word',
   signIn: 'Sign in',
   signInPrompt: 'Sign in with your atproto handle to save your streak and share results.',
   signInPlaceholder: 'you.bsky.social or you.com',
@@ -106,8 +137,20 @@ const FR: Strings = {
   howTo: [
     'Devinez le mot de 5 lettres en 6 essais.',
     'Chaque proposition doit être un vrai mot.',
-    'Les cases indiquent votre progression : bonne lettre bien placée, bonne lettre mal placée, ou absente du mot.',
+    'Après chaque essai, les cases changent de couleur pour montrer votre progression.',
   ],
+  howToExamples: [
+    { word: 'PORTE', index: 0, state: 'correct', caption: 'Le P est dans le mot et bien placé.' },
+    { word: 'TABLE', index: 1, state: 'present', caption: 'Le A est dans le mot mais mal placé.' },
+    { word: 'MOULE', index: 0, state: 'absent', caption: 'Le M n’est pas dans le mot.' },
+  ],
+  helpOpen: 'Comment jouer',
+  helpClose: 'Fermer',
+  helpColorBlindHint: 'Daltonien ? Activez le « Mode daltonien » dans le pied de page pour ajouter un symbole à chaque case.',
+  colorBlindMode: 'Mode daltonien',
+  legendCorrect: 'Bien placée',
+  legendPresent: 'Mal placée',
+  legendAbsent: 'Absente',
   signIn: 'Se connecter',
   signInPrompt: 'Connectez-vous avec votre identifiant atproto pour enregistrer votre série et partager vos résultats.',
   signInPlaceholder: 'vous.bsky.social ou vous.fr',
