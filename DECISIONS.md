@@ -110,6 +110,14 @@ documented interpretation was needed.
     recorded the moment you sign in (the write-once result prevents double-counting). This is
     friendlier than gating play behind OAuth while staying fully serverless.
 
+16a. **Sign-in prompt sits below the keyboard, with a header shortcut.** The inline sign-in bar used
+    to render between the board and the on-screen keyboard, so on mobile it pushed the keys off-screen
+    and players had to scroll past the prompt to type (issue #2). Play order is now tiles → legend →
+    keyboard → sign-in prompt, keeping the keyboard next to the board. Because the prompt can then fall
+    below the fold, a "Sign in" header button (signed-out, play view only) focuses and scrolls the
+    inline bar into view — it occupies the same header slot as the "Sign out" button shown when signed
+    in, so the bar stays symmetric.
+
 17. **`redirect_uri` is the site root** (`https://atmot.herve.bzh/`); the OAuth callback is detected
     from the hash params on load. Dev uses atproto's loopback client via a Vite plugin (no hosted
     metadata needed locally).
