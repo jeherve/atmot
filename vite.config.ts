@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite';
-import metadata from './public/client-metadata.json' with { type: 'json' };
+import metadata from './public/oauth-client-metadata.json' with { type: 'json' };
 
 // AT Protocol OAuth forbids `localhost` — use the loopback IP instead.
 const SERVER_HOST = '127.0.0.1';
@@ -11,7 +11,7 @@ export default defineConfig({
   plugins: [
     {
       // Wires the OAuth client_id / redirect_uri into the build.
-      // In production we use the real hosted client-metadata.json URL.
+      // In production we use the real hosted oauth-client-metadata.json URL.
       // In dev, atproto allows a special loopback `client_id` that encodes
       // the redirect_uri + scope, so no public metadata document is needed.
       name: 'atmot-oauth-envs',

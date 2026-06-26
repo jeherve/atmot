@@ -114,6 +114,16 @@ documented interpretation was needed.
     from the hash params on load. Dev uses atproto's loopback client via a Vite plugin (no hosted
     metadata needed locally).
 
+17a. **`client_id` uses the conventional filename** `oauth-client-metadata.json` (served at
+    `https://atmot.herve.bzh/oauth-client-metadata.json`), not an arbitrary name like
+    `client-metadata.json`. atproto's OAuth provider only collapses the consent-screen client display
+    to the bare hostname (`atmot.herve.bzh`) when `client_id` matches the "conventional" form —
+    `https://<host>/oauth-client-metadata.json`, exact path, no port, no query string
+    (`isConventionalOAuthClientId` in `@atproto/oauth-types`). Any other path makes the screen render
+    the full metadata URL instead. Renaming costs a one-time re-authorization for existing sessions
+    (tokens were issued against the old `client_id`), which is acceptable for a casual daily game.
+    See issue #1.
+
 17b. **Granular OAuth scopes — no `transition:generic`.** The client requests exactly the writes it
     performs, nothing more:
 

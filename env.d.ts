@@ -3,7 +3,7 @@
 /// <reference types="@atcute/bluesky" />
 
 interface ImportMetaEnv {
-  /** OAuth `client_id` — the public URL of client-metadata.json (or a loopback client_id in dev). */
+  /** OAuth `client_id` — the public URL of oauth-client-metadata.json (or a loopback client_id in dev). */
   readonly VITE_OAUTH_CLIENT_ID: string;
   /** OAuth redirect URI the authorization server sends the user back to. */
   readonly VITE_OAUTH_REDIRECT_URI: string;

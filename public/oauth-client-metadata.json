@@ -1,5 +1,5 @@
 {
-  "client_id": "https://atmot.herve.bzh/client-metadata.json",
+  "client_id": "https://atmot.herve.bzh/oauth-client-metadata.json",
   "client_name": "AT Mot",
   "client_uri": "https://atmot.herve.bzh",
   "logo_uri": "https://atmot.herve.bzh/icon.svg",

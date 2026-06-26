@@ -6,16 +6,28 @@ import { COLLECTION } from '../src/config.js';
 // Resolve paths relative to the repo root (this file is in tests/).
 const root = fileURLToPath(new URL('..', import.meta.url));
 
-const metadata = JSON.parse(readFileSync(root + 'public/client-metadata.json', 'utf8'));
+const metadata = JSON.parse(readFileSync(root + 'public/oauth-client-metadata.json', 'utf8'));
 const scopes: string[] = String(metadata.scope).split(/\s+/).filter(Boolean);
 
 /** Find the granted `repo:<nsid>` token for a collection, or undefined. */
 const repoScope = (nsid: string) =>
   scopes.find((s) => s === `repo:${nsid}` || s.startsWith(`repo:${nsid}?`));
 
-describe('OAuth scope (client-metadata.json)', () => {
+describe('OAuth scope (oauth-client-metadata.json)', () => {
   it('requests the base atproto scope', () => {
     expect(scopes).toContain('atproto');
+  });
+
+  // The atproto OAuth consent screen only collapses the client display to a
+  // bare hostname (instead of the full metadata URL) when client_id is in the
+  // "conventional" form: https://<host>/oauth-client-metadata.json, served at
+  // that exact path with no port or query string. See issue #1.
+  it('uses the conventional client_id so the consent screen shows just the host', () => {
+    const url = new URL(metadata.client_id);
+    expect(url.protocol).toBe('https:');
+    expect(url.pathname).toBe('/oauth-client-metadata.json');
+    expect(url.port).toBe('');
+    expect(url.search).toBe('');
   });
 
   it('uses granular least-privilege scopes, never broad transition:generic', () => {
