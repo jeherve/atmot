@@ -20,7 +20,12 @@ import {
 } from '../config.js';
 import { TILE_CODE, type GameResult, type TileState } from '../engine/types.js';
 import { computeNextStats, type StatsRecord } from '../engine/stats.js';
-import { buildShareText, buildShareFacets, buildShareEmbed } from '../engine/share.js';
+import {
+  assembleShareText,
+  defaultShareNote,
+  buildShareFacets,
+  buildShareEmbed,
+} from '../engine/share.js';
 import type { Session } from './oauth.js';
 import { resolveActor, pdsClient } from './identity.js';
 import { asDid, asNsid } from './brands.js';
@@ -202,8 +207,12 @@ export async function getRecordByUri<T = unknown>(uri: string): Promise<T | null
  * design, not a bug. We deliberately do NOT store the returned uri/cid anywhere:
  * the permalink embedded in the post text is the only linkage Constellation needs.
  */
-export async function sharePost(session: Session, result: GameResult): Promise<{ uri: string }> {
-  const text = buildShareText(result);
+export async function sharePost(
+  session: Session,
+  result: GameResult,
+  note?: string,
+): Promise<{ uri: string }> {
+  const text = assembleShareText(result, note ?? defaultShareNote(result));
   const res = await session.rpc.post('com.atproto.repo.createRecord', {
     input: {
       repo: session.did as `did:${string}:${string}`,
@@ -215,7 +224,7 @@ export async function sharePost(session: Session, result: GameResult): Promise<{
         langs: [result.lang],
         // The permalink must be a real link feature (facet) + embed so
         // Constellation can discover this post as a backlink to the puzzle.
-        facets: buildShareFacets(result),
+        facets: buildShareFacets(result, note),
         embed: buildShareEmbed(result),
       } as unknown as Record<string, unknown>,
     },

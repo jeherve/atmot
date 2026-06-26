@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { writeResult } from '../src/atproto/records.js';
+import { writeResult, sharePost } from '../src/atproto/records.js';
 import { COLLECTION, resultRkey } from '../src/config.js';
 import type { GameResult } from '../src/engine/types.js';
 import type { Session } from '../src/atproto/oauth.js';
@@ -26,6 +26,40 @@ function fakeSession(over: {
   const session = { did: DID, rpc: { get, post } } as unknown as Session;
   return { session, get, post };
 }
+
+function sharedResult(): GameResult {
+  return {
+    lang: 'fr',
+    puzzleNumber: 412,
+    solved: true,
+    guessCount: 4,
+    rows: [['correct', 'correct', 'correct', 'correct', 'correct']],
+  };
+}
+
+describe('sharePost', () => {
+  it('posts the default header text when no note is given', async () => {
+    const { session, post } = fakeSession({});
+    await sharePost(session, sharedResult());
+    const rec = (post.mock.calls[0]![1] as { input: { record: { text: string } } }).input.record;
+    expect(rec.text).toContain('AT Mot 412 (FR) 4/6');
+    expect(rec.text.trimEnd().endsWith('https://atmot.herve.bzh/p/fr/412')).toBe(true);
+  });
+
+  it('posts a custom note and recomputes facets to point at the link', async () => {
+    const { session, post } = fakeSession({});
+    await sharePost(session, sharedResult(), 'Réussi ! 🎉');
+    const rec = (post.mock.calls[0]![1] as {
+      input: { record: { text: string; facets: Array<{ index: { byteStart: number; byteEnd: number } }> } };
+    }).input.record;
+    expect(rec.text).toContain('Réussi ! 🎉');
+    expect(rec.text).not.toContain('AT Mot');
+    const bytes = new TextEncoder().encode(rec.text);
+    const f = rec.facets[0]!;
+    const slice = new TextDecoder().decode(bytes.slice(f.index.byteStart, f.index.byteEnd));
+    expect(slice).toBe('https://atmot.herve.bzh/p/fr/412');
+  });
+});
 
 describe('writeResult', () => {
   it('is a no-op replay when the record already exists (PDS returns an opaque 500)', async () => {
