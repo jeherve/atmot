@@ -38,7 +38,6 @@ export function renderPlayView(ctx: Ctx, root: HTMLElement): void {
   let state = loadGame(ctx.lang, puzzleNumber);
   let pending = '';
   let animateRow = -1; // row to flip-animate on the next renderContent (one-shot)
-  let busy = false;
   let recordTried = false;
 
   const shell = el('div', { class: 'shell' });
@@ -82,7 +81,7 @@ export function renderPlayView(ctx: Ctx, root: HTMLElement): void {
   }
 
   function submit(): void {
-    if (busy || isFinished(state)) return;
+    if (isFinished(state)) return;
     if (pending.length < WORD_LENGTH) {
       toast(t(ctx.lang).notEnough);
       shakeActiveRow();
@@ -103,7 +102,7 @@ export function renderPlayView(ctx: Ctx, root: HTMLElement): void {
   }
 
   function typeLetter(ch: string): void {
-    if (isFinished(state) || busy) return;
+    if (isFinished(state)) return;
     if (pending.length < WORD_LENGTH && /^[A-Za-z]$/.test(ch)) {
       pending += ch.toUpperCase();
       renderBoardOnly();
@@ -111,7 +110,7 @@ export function renderPlayView(ctx: Ctx, root: HTMLElement): void {
   }
 
   function backspace(): void {
-    if (isFinished(state) || busy) return;
+    if (isFinished(state)) return;
     pending = pending.slice(0, -1);
     renderBoardOnly();
   }

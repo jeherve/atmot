@@ -20,7 +20,7 @@ function buildShareDialog(lang: Lang, result: GameResult, onSubmit: ShareSubmit)
 
   const close = el(
     'button',
-    { class: 'help-close', type: 'button', ariaLabel: s.helpClose, onClick: () => dialog.close() },
+    { class: 'help-close', type: 'button', ariaLabel: s.helpClose, onClick: () => { if (!busy) dialog.close(); } },
     '×',
   );
 
@@ -40,7 +40,7 @@ function buildShareDialog(lang: Lang, result: GameResult, onSubmit: ShareSubmit)
 
   const counter = el('span', { class: 'share-counter', ariaLive: 'polite' });
   const post = el('button', { class: 'btn primary', type: 'button' }, s.postShare) as HTMLButtonElement;
-  const cancel = el('button', { class: 'btn', type: 'button', onClick: () => dialog.close() }, s.cancel);
+  const cancel = el('button', { class: 'btn', type: 'button', onClick: () => { if (!busy) dialog.close(); } }, s.cancel);
 
   let busy = false;
 
