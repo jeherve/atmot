@@ -34,10 +34,11 @@ function buildShareDialog(lang: Lang, result: GameResult, onSubmit: ShareSubmit)
   const preview = el(
     'pre',
     { class: 'share-locked' },
+    // Use result.lang (the puzzle's language), NOT the UI `lang` param, so the preview is byte-identical to what sharePost/assembleShareText publish.
     `${emojiGrid(result.rows)}\n\n${puzzleTarget(result.lang as Lang, result.puzzleNumber)}`,
   );
 
-  const counter = el('span', { class: 'share-counter' });
+  const counter = el('span', { class: 'share-counter', ariaLive: 'polite' });
   const post = el('button', { class: 'btn primary', type: 'button' }, s.postShare) as HTMLButtonElement;
   const cancel = el('button', { class: 'btn', type: 'button', onClick: () => dialog.close() }, s.cancel);
 
@@ -83,7 +84,10 @@ function buildShareDialog(lang: Lang, result: GameResult, onSubmit: ShareSubmit)
 
   // Backdrop click dismisses; tidy up the DOM once closed.
   dialog.addEventListener('click', (e) => {
-    if (e.target === dialog) dialog.close();
+    if (!busy && e.target === dialog) dialog.close();
+  });
+  dialog.addEventListener('cancel', (e) => {
+    if (busy) e.preventDefault();
   });
   dialog.addEventListener('close', () => dialog.remove());
 
