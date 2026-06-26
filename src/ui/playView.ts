@@ -227,13 +227,14 @@ export function renderPlayView(ctx: Ctx, root: HTMLElement): void {
       // A compact colour/symbol key under the board, so the tiles are readable
       // without opening the help modal.
       children.push(renderLegend(ctx.lang));
-      if (!ctx.session) {
-        children.push(signInBar(ctx, t(ctx.lang).signInPrompt));
-      }
-      // Hide the on-screen keyboard once the game is over — there's nothing left to type.
+      // Keyboard before the sign-in prompt: on mobile the prompt otherwise wedges
+      // between the board and keyboard, pushing the keys off-screen (issue #2).
       children.push(
         renderKeyboard(state, ctx.lang, { onLetter: typeLetter, onEnter: submit, onBackspace: backspace }),
       );
+      if (!ctx.session) {
+        children.push(signInBar(ctx, t(ctx.lang).signInPrompt));
+      }
     }
     mount(main, ...children);
   }
