@@ -681,6 +681,71 @@ dialog.help {
 dialog.help::backdrop {
   background: rgba(8, 12, 18, 0.55);
 }
+dialog.share-edit {
+  width: min(480px, calc(100vw - 32px));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--fg);
+  padding: 22px 22px 24px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+}
+dialog.share-edit::backdrop {
+  background: rgba(8, 12, 18, 0.55);
+}
+.share-label {
+  display: block;
+  font-weight: 600;
+  margin: 14px 0 6px;
+}
+textarea.share-note {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 64px;
+  font: inherit;
+  color: var(--fg);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+}
+.share-locked-note {
+  font-size: 13px;
+  color: var(--fg-muted);
+  margin: 12px 0 6px;
+}
+pre.share-locked {
+  margin: 0;
+  padding: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font: inherit;
+  color: var(--fg-muted);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.share-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 18px;
+}
+.share-counter {
+  font-size: 13px;
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+.share-counter.over {
+  color: #e5534b;
+  font-weight: 600;
+}
+.share-actions {
+  display: flex;
+  gap: 8px;
+}
 .help-head {
   display: flex;
   align-items: flex-start;
