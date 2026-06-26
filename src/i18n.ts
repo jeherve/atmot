@@ -39,6 +39,11 @@ interface Strings {
   lost: string;
   theWordWas: string;
   shareToAtproto: string;
+  shareEditTitle: string;
+  shareMessageLabel: string;
+  shareLockedNote: string;
+  postShare: string;
+  cancel: string;
   shared: string;
   sharing: string;
   copyResult: string;
@@ -102,6 +107,11 @@ const EN: Strings = {
   lost: 'Out of guesses',
   theWordWas: 'The word was',
   shareToAtproto: 'Share to atproto',
+  shareEditTitle: 'Customise your post',
+  shareMessageLabel: 'Your message',
+  shareLockedNote: 'Your grid and link stay attached so your result still counts on the leaderboard.',
+  postShare: 'Post',
+  cancel: 'Cancel',
   shared: 'Shared ✓',
   sharing: 'Sharing…',
   copyResult: 'Copy grid',
@@ -165,6 +175,11 @@ const FR: Strings = {
   lost: 'Plus d’essais',
   theWordWas: 'Le mot était',
   shareToAtproto: 'Partager sur atproto',
+  shareEditTitle: 'Personnalisez votre message',
+  shareMessageLabel: 'Votre message',
+  shareLockedNote: 'Votre grille et votre lien restent attachés pour que votre résultat compte dans le classement.',
+  postShare: 'Publier',
+  cancel: 'Annuler',
   shared: 'Partagé ✓',
   sharing: 'Partage…',
   copyResult: 'Copier la grille',
