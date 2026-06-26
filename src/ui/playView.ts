@@ -17,6 +17,7 @@ import { renderFooter } from './footer.js';
 import { renderBoard, REVEAL_DURATION_MS } from './board.js';
 import { renderLegend } from './legend.js';
 import { maybeShowFirstVisitHelp } from './help.js';
+import { openShareDialog } from './shareDialog.js';
 import { renderKeyboard } from './keyboard.js';
 import { renderDistribution, renderShareGrid, renderCountdown, stopCountdown } from './widgets.js';
 import type { Ctx } from './context.js';
@@ -121,19 +122,18 @@ export function renderPlayView(ctx: Ctx, root: HTMLElement): void {
     if (old) old.replaceWith(renderBoard(state, pending));
   }
 
-  async function doShare(): Promise<void> {
-    if (!ctx.session) return;
-    busy = true;
-    renderContent();
-    try {
-      await sharePost(ctx.session, toGameResult(state));
-      toast(t(ctx.lang).shared);
-    } catch {
-      toast(t(ctx.lang).constellationDown);
-    } finally {
-      busy = false;
-      renderContent();
-    }
+  function doShare(): void {
+    const session = ctx.session;
+    if (!session) return;
+    openShareDialog(ctx.lang, toGameResult(state), async (note) => {
+      try {
+        await sharePost(session, toGameResult(state), note);
+        toast(t(ctx.lang).shared);
+      } catch (e) {
+        toast(t(ctx.lang).constellationDown);
+        throw e; // keep the dialog open so the user keeps their text
+      }
+    });
   }
 
   async function copyGrid(): Promise<void> {
@@ -170,8 +170,8 @@ export function renderPlayView(ctx: Ctx, root: HTMLElement): void {
       actions.append(
         el(
           'button',
-          { class: 'btn primary', disabled: busy, onClick: () => void doShare() },
-          busy ? s.sharing : s.shareToAtproto,
+          { class: 'btn primary', onClick: () => doShare() },
+          s.shareToAtproto,
         ),
       );
     }
