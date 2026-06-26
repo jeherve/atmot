@@ -37,18 +37,33 @@ export function shareHeader(result: GameResult): string {
   return `${BRAND} ${result.puzzleNumber} (${result.lang.toUpperCase()}) ${scoreLabel(result)}`;
 }
 
+/** The default editable note shown in the share dialog — the header line. */
+export function defaultShareNote(result: GameResult): string {
+  return shareHeader(result);
+}
+
 /**
- * The full post text for "Share to atproto".
+ * Assemble the full post text from an editable `note` plus the fixed grid + permalink.
  *
- * Structure: header line, blank line, emoji grid, blank line, permalink.
- *
- * The permalink is LOAD-BEARING: it's the only linkage between a shared
- * `app.bsky.feed.post` and the puzzle — Constellation discovers shared posts by
- * finding this URL as a backlink. Nothing is stored on the result record.
+ * The note is the only editable region. The emoji grid is the recognisable shared
+ * artifact, and the permalink is LOAD-BEARING — it's the only linkage Constellation
+ * uses to discover a shared post. The permalink always stays LAST so the link facet
+ * and embed are unaffected by edits. An empty / whitespace-only note drops the note
+ * line entirely, leaving `grid\n\n link`.
+ */
+export function assembleShareText(result: GameResult, note: string): string {
+  const link = puzzleTarget(result.lang as Lang, result.puzzleNumber);
+  const grid = emojiGrid(result.rows);
+  const trimmed = note.trim();
+  return trimmed ? `${trimmed}\n\n${grid}\n\n${link}` : `${grid}\n\n${link}`;
+}
+
+/**
+ * The full post text for "Share to atproto" with the default header note.
+ * Used by the clipboard "Copy grid" action.
  */
 export function buildShareText(result: GameResult): string {
-  const link = puzzleTarget(result.lang as Lang, result.puzzleNumber);
-  return `${shareHeader(result)}\n\n${emojiGrid(result.rows)}\n\n${link}`;
+  return assembleShareText(result, defaultShareNote(result));
 }
 
 /** A Bluesky richtext link facet (UTF-8 byte offsets). */
@@ -64,8 +79,11 @@ export interface ShareFacet {
  * permalink must be a real richtext link feature for shared posts to be
  * discoverable as backlinks. Offsets are UTF-8 byte positions per the spec.
  */
-export function buildShareFacets(result: GameResult): ShareFacet[] {
-  const text = buildShareText(result);
+export function buildShareFacets(
+  result: GameResult,
+  note: string = defaultShareNote(result),
+): ShareFacet[] {
+  const text = assembleShareText(result, note);
   const link = puzzleTarget(result.lang as Lang, result.puzzleNumber);
   const enc = new TextEncoder();
   const byteStart = enc.encode(text.slice(0, text.lastIndexOf(link))).length;
@@ -92,4 +110,13 @@ export function buildShareEmbed(result: GameResult): {
       description: 'A bilingual daily word game on the AT Protocol. Play today’s puzzle.',
     },
   };
+}
+
+/** Bluesky caps an app.bsky.feed.post at 300 graphemes. */
+export const POST_MAX_GRAPHEMES = 300;
+
+/** Count user-perceived characters (graphemes), matching Bluesky's limit metric. */
+export function countGraphemes(text: string): number {
+  const seg = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+  return Array.from(seg.segment(text)).length;
 }
