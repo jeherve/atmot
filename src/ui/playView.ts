@@ -45,7 +45,7 @@ export function renderPlayView(ctx: Ctx, root: HTMLElement): void {
   mount(root, shell);
 
   function rerenderApp(): void {
-    mount(shell, renderHeader(ctx), main, renderFooter(ctx, puzzleNumber));
+    mount(shell, renderHeader(ctx, { showSignIn: true }), main, renderFooter(ctx, puzzleNumber));
   }
 
   function shakeActiveRow(): void {

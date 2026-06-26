@@ -36,3 +36,24 @@ describe('renderHeader language switch', () => {
     expect(pathForLangSwitch('/p/fr/1', 'en')).toBe('/p/en/1');
   });
 });
+
+describe('renderHeader sign-in button', () => {
+  const signedIn = { session: {} as Ctx['session'] };
+  const signIn = (header: HTMLElement) =>
+    [...header.querySelectorAll('button')].find((b) => b.textContent === 'Sign in');
+
+  it('shows a Sign in button on the play view when signed out', () => {
+    const header = renderHeader(makeCtx({ lang: 'en' }), { showSignIn: true });
+    expect(signIn(header)).toBeDefined();
+  });
+
+  it('hides the Sign in button when signed in', () => {
+    const header = renderHeader(makeCtx({ lang: 'en', ...signedIn }), { showSignIn: true });
+    expect(signIn(header)).toBeUndefined();
+  });
+
+  it('hides the Sign in button on views that do not opt in (puzzle/about)', () => {
+    const header = renderHeader(makeCtx({ lang: 'en' }));
+    expect(signIn(header)).toBeUndefined();
+  });
+});

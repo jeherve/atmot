@@ -45,4 +45,20 @@ describe('renderPlayView layout order', () => {
     expect(keyboardIdx).toBeGreaterThan(boardIdx);
     expect(signInIdx).toBeGreaterThan(keyboardIdx);
   });
+
+  // The header sign-in shortcut jumps to the inline bar so mobile players who
+  // miss the prompt below the keyboard can still reach it.
+  it('focuses the inline sign-in input when the header Sign in button is clicked', () => {
+    const root = document.createElement('div');
+    document.body.replaceChildren(root);
+    renderPlayView(makeCtx(null), root);
+
+    const headerSignIn = [...root.querySelectorAll('header button')].find(
+      (b) => b.textContent === 'Sign in',
+    ) as HTMLButtonElement | undefined;
+    expect(headerSignIn).toBeDefined();
+
+    headerSignIn!.click();
+    expect(document.activeElement?.id).toBe('atmot-handle');
+  });
 });
