@@ -15,7 +15,7 @@ import {
   postEngagement,
   backlinkUri,
 } from './constellation.js';
-import { getRecordByUri, type ResultRecord } from './records.js';
+import { getRecordByUri, parseResultRecord, type ResultRecord } from './records.js';
 import { handleForDid } from './identity.js';
 
 /** Run async `fn` over items with bounded concurrency. */
@@ -68,7 +68,11 @@ export async function getDailyStats(
     dailyResultBacklinks(lang, puzzleNumber, SAMPLE_CAP),
   ]);
 
-  const records = await pMap(backlinks, 8, (r) => getRecordByUri<ResultRecord>(backlinkUri(r)));
+  // Foreign result records are validated against the lexicon shape before they
+  // reach the aggregate; non-conforming ones come back null and are dropped.
+  const records = await pMap(backlinks, 8, (r) =>
+    getRecordByUri<ResultRecord>(backlinkUri(r), parseResultRecord),
+  );
 
   const entries: LeaderboardEntry[] = [];
   const dist = new Map<number, number>();

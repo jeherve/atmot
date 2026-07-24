@@ -175,10 +175,69 @@ export function parseAtUri(uri: string): { did: string; collection: string; rkey
 }
 
 /**
+ * Validate an untrusted value fetched from a foreign PDS against the
+ * `bzh.herve.atmot.result` lexicon shape before it is trusted in the public
+ * leaderboard aggregate. A player who controls their PDS (or self-hosts a lax
+ * one that does not enforce the lexicon) can return a result record with
+ * out-of-range or wrong-typed fields — e.g. a `guessCount` of 1e9, negative, or
+ * a string — which would otherwise be summed straight into the shared "average
+ * guesses" and guess distribution. Returns the typed record only when every
+ * field conforms to the lexicon (types, `puzzleNumber` >= 1, and `guessCount`
+ * within its 1..6 range); returns null so a non-conforming record is dropped
+ * rather than folded in.
+ */
+export function parseResultRecord(value: unknown): ResultRecord | null {
+  if (typeof value !== 'object' || value === null) return null;
+  const v = value as Record<string, unknown>;
+
+  if (v.$type !== 'bzh.herve.atmot.result') return null;
+  if (typeof v.lang !== 'string') return null;
+  if (typeof v.puzzleNumber !== 'number' || !Number.isInteger(v.puzzleNumber) || v.puzzleNumber < 1) {
+    return null;
+  }
+  if (typeof v.puzzleDate !== 'string') return null;
+  if (typeof v.solved !== 'boolean') return null;
+  if (typeof v.puzzleTarget !== 'string') return null;
+  if (typeof v.createdAt !== 'string') return null;
+
+  // Optional (absent on a loss); when present it must be an integer in 1..6.
+  if (v.guessCount != null) {
+    if (
+      typeof v.guessCount !== 'number' ||
+      !Number.isInteger(v.guessCount) ||
+      v.guessCount < 1 ||
+      v.guessCount > 6
+    ) {
+      return null;
+    }
+  }
+
+  // Optional; when present it must be an array (<= 6 rows) of `{ row: string }`.
+  if (v.grid != null) {
+    if (!Array.isArray(v.grid) || v.grid.length > 6) return null;
+    for (const row of v.grid as unknown[]) {
+      if (typeof row !== 'object' || row === null) return null;
+      if (typeof (row as Record<string, unknown>).row !== 'string') return null;
+    }
+  }
+
+  return value as ResultRecord;
+}
+
+/**
  * Public read of any record by AT-URI (resolves the owner's PDS). Returns the
  * record value or null on any failure (callers degrade gracefully).
+ *
+ * The record value comes from a PDS the record's owner controls, so it is
+ * untrusted: callers that fold foreign records into shared state pass a
+ * `validate` function (e.g. `parseResultRecord`) to check the value against its
+ * lexicon shape here, at the trust boundary, instead of casting it blindly.
+ * A validator that returns null drops the record.
  */
-export async function getRecordByUri<T = unknown>(uri: string): Promise<T | null> {
+export async function getRecordByUri<T = unknown>(
+  uri: string,
+  validate?: (value: unknown) => T | null,
+): Promise<T | null> {
   const parts = parseAtUri(uri);
   if (!parts) return null;
   try {
@@ -192,7 +251,8 @@ export async function getRecordByUri<T = unknown>(uri: string): Promise<T | null
       },
     });
     if (!res.ok) return null;
-    return res.data.value as unknown as T;
+    const value = res.data.value as unknown;
+    return validate ? validate(value) : (value as T);
   } catch {
     return null;
   }
