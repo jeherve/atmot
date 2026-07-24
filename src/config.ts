@@ -87,6 +87,15 @@ export function puzzleTarget(lang: Lang, puzzleNumber: number): string {
   return `${ORIGIN}/p/${lang}/${puzzleNumber}`;
 }
 
+/**
+ * The largest puzzle number whose UTC date still falls inside the range that
+ * ECMAScript's Date can represent (±8.64e15 ms from 1970). Beyond this,
+ * `puzzleDateString` / `puzzleDateTime` throw a RangeError ("Invalid time
+ * value"), so `parsePuzzleTarget` rejects out-of-range numbers from crafted
+ * URLs rather than letting them crash the render.
+ */
+const MAX_PUZZLE_NUMBER = Math.floor((8_640_000_000_000_000 - EPOCH_UTC_MS) / MS_PER_DAY) + 1;
+
 /** Parse a puzzleTarget / permalink path back into (lang, puzzleNumber), or null. */
 export function parsePuzzleTarget(input: string): { lang: Lang; puzzleNumber: number } | null {
   let path = input;
@@ -99,7 +108,13 @@ export function parsePuzzleTarget(input: string): { lang: Lang; puzzleNumber: nu
   if (!m) return null;
   const lang = m[1]!;
   const puzzleNumber = Number(m[2]);
-  if (!isLang(lang) || !Number.isInteger(puzzleNumber) || puzzleNumber < 1) return null;
+  if (
+    !isLang(lang) ||
+    !Number.isInteger(puzzleNumber) ||
+    puzzleNumber < 1 ||
+    puzzleNumber > MAX_PUZZLE_NUMBER
+  )
+    return null;
   return { lang, puzzleNumber };
 }
 

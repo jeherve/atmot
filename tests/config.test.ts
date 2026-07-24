@@ -34,6 +34,16 @@ describe('puzzleTarget — frozen format (Constellation matches literally)', () 
     expect(parsePuzzleTarget('https://atmot.herve.bzh/p/de/1')).toBeNull();
     expect(parsePuzzleTarget('https://atmot.herve.bzh/p/fr/0')).toBeNull();
   });
+
+  it('rejects numbers whose date overflows Date (crafted /p/en/100000001 crash)', () => {
+    // 99_979_374 is the last puzzle whose UTC date is still representable; one
+    // more overflows and made puzzleDateString throw "Invalid time value",
+    // taking down the puzzle-page render.
+    expect(parsePuzzleTarget('/p/en/99979374')).toEqual({ lang: 'en', puzzleNumber: 99_979_374 });
+    expect(() => puzzleDateString(99_979_374)).not.toThrow();
+    expect(parsePuzzleTarget('/p/en/99979375')).toBeNull();
+    expect(parsePuzzleTarget('/p/en/100000001')).toBeNull();
+  });
 });
 
 describe('pathForLangSwitch — keep puzzle pages in sync with the lang toggle', () => {
