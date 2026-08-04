@@ -1,5 +1,14 @@
 import { describe, it, expect, vi } from 'vitest';
-import { writeResult, sharePost, parseResultRecord } from '../src/atproto/records.js';
+import {
+  writeResult,
+  writeStats,
+  sharePost,
+  parseResultRecord,
+  describeWriteError,
+  isAuthFailure,
+  WriteFailedError,
+} from '../src/atproto/records.js';
+import { TokenRefreshError } from '@atcute/oauth-browser-client';
 import { COLLECTION, resultRkey } from '../src/config.js';
 import type { GameResult } from '../src/engine/types.js';
 import type { Session } from '../src/atproto/oauth.js';
@@ -180,6 +189,103 @@ describe('writeResult', () => {
       post: () => ({ ok: false, data: { error: 'InvalidRecord', message: 'bad' } }),
     });
 
-    await expect(writeResult(session, result())).rejects.toThrow(/createRecord failed/);
+    await expect(writeResult(session, result())).rejects.toThrow(/createRecord .* failed/);
+  });
+
+  // A save that fails every day is only fixable if the PDS's own explanation
+  // survives. The thrown error must carry the collection, the HTTP status and
+  // the PDS error body, so the toast and the console can show why.
+  it('names the collection, status and PDS error body when the create fails', async () => {
+    const { session } = fakeSession({
+      get: () => ({ ok: false, status: 400, data: {} }),
+      post: () => ({
+        ok: false,
+        status: 403,
+        data: { error: 'InvalidToken', message: 'Bad token scope' },
+      }),
+    });
+
+    await expect(writeResult(session, result())).rejects.toThrow(
+      /createRecord.*bzh\.herve\.atmot\.result.*403.*InvalidToken.*Bad token scope/s,
+    );
+  });
+});
+
+describe('writeStats', () => {
+  it('names putRecord, the collection, status and PDS error body when it fails', async () => {
+    const { session } = fakeSession({
+      post: () => ({ ok: false, status: 429, data: { error: 'RateLimitExceeded' } }),
+    });
+
+    await expect(
+      writeStats(session, {
+        $type: 'bzh.herve.atmot.stats',
+        byLang: [],
+        updatedAt: '2026-08-03T00:00:00.000Z',
+      }),
+    ).rejects.toThrow(/putRecord.*bzh\.herve\.atmot\.stats.*429.*RateLimitExceeded/s);
+  });
+});
+
+describe('isAuthFailure', () => {
+  // The PDS answers a dead token with 401 invalid_token; atcute tries to refresh,
+  // the refresh fails, and it hands the 401 back rather than throwing. That is
+  // the shape a signed-out player actually produces, so it must be recognised.
+  it('recognises a 401 from the PDS', async () => {
+    const { session } = fakeSession({
+      get: () => ({ ok: false, status: 401, data: { error: 'InvalidToken' } }),
+      post: () => ({ ok: false, status: 401, data: { error: 'InvalidToken' } }),
+    });
+
+    const err = await writeResult(session, result()).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(WriteFailedError);
+    expect(isAuthFailure(err)).toBe(true);
+  });
+
+  it('recognises a token error name even without a 401 status', () => {
+    const err = new WriteFailedError('createRecord', COLLECTION.result, {
+      data: { error: 'ExpiredToken', message: 'Token has expired' },
+    });
+    expect(isAuthFailure(err)).toBe(true);
+  });
+
+  it('recognises a failed token refresh thrown by atcute', () => {
+    const err = new TokenRefreshError('did:plc:abc' as never, 'session was revoked');
+    expect(isAuthFailure(err)).toBe(true);
+  });
+
+  // A genuine save problem must NOT sign the player out — that would throw away
+  // a working session over an unrelated PDS error.
+  it('does not treat an ordinary write rejection as an auth failure', () => {
+    const err = new WriteFailedError('createRecord', COLLECTION.result, {
+      status: 400,
+      data: { error: 'InvalidRecord', message: 'bad' },
+    });
+    expect(isAuthFailure(err)).toBe(false);
+  });
+
+  it('does not treat an arbitrary error as an auth failure', () => {
+    expect(isAuthFailure(new Error('network down'))).toBe(false);
+    expect(isAuthFailure(null)).toBe(false);
+  });
+});
+
+describe('describeWriteError', () => {
+  it('keeps the message of a thrown Error so the toast can show the reason', () => {
+    expect(describeWriteError(new Error('createRecord failed (HTTP 403): nope'))).toBe(
+      'createRecord failed (HTTP 403): nope',
+    );
+  });
+
+  it('stringifies a non-Error rejection', () => {
+    expect(describeWriteError('network down')).toBe('network down');
+  });
+
+  // The toast is a single transient line; an unbounded PDS body would bury the
+  // rest of the UI (the full text still goes to the console).
+  it('truncates a very long message', () => {
+    const out = describeWriteError(new Error('x'.repeat(500)));
+    expect(out.length).toBeLessThanOrEqual(200);
+    expect(out.endsWith('…')).toBe(true);
   });
 });

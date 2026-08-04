@@ -26,6 +26,7 @@ import {
   buildShareFacets,
   buildShareEmbed,
 } from '../engine/share.js';
+import { TokenRefreshError } from '@atcute/oauth-browser-client';
 import type { Session } from './oauth.js';
 import { resolveActor, pdsClient } from './identity.js';
 import { asDid, asNsid } from './brands.js';
@@ -60,6 +61,72 @@ export function buildResultRecord(result: GameResult, createdAt: string): Result
   };
   if (result.solved && result.guessCount != null) rec.guessCount = result.guessCount;
   return rec;
+}
+
+/**
+ * Thrown when an XRPC write is rejected.
+ *
+ * A save that fails is otherwise invisible: the caller only learns that
+ * *something* went wrong, which is useless when the failure repeats every day
+ * on one PDS but not another. Keep the calling method, the collection, the HTTP
+ * status and the PDS's own error body together in the message so it can be read
+ * off a toast or a console line without a debugger attached, and keep `status`
+ * and `errorName` as fields so callers can branch on them without parsing text.
+ */
+export class WriteFailedError extends Error {
+  override readonly name = 'WriteFailedError';
+  readonly status: number | undefined;
+  readonly collection: string;
+  readonly errorName: string | undefined;
+
+  constructor(method: string, collection: string, res: { status?: number; data?: unknown }) {
+    const status = typeof res.status === 'number' ? `HTTP ${res.status}` : 'no status';
+    super(`${method} ${collection} failed (${status}): ${JSON.stringify(res.data)}`);
+    this.status = typeof res.status === 'number' ? res.status : undefined;
+    this.collection = collection;
+    const name = (res.data as { error?: unknown } | undefined)?.error;
+    this.errorName = typeof name === 'string' ? name : undefined;
+  }
+}
+
+/** PDS error names that mean "this session is no longer usable". */
+const AUTH_ERROR_NAMES = new Set([
+  'invalidtoken',
+  'expiredtoken',
+  'authenticationrequired',
+  'authmissing',
+  'invalid_token',
+]);
+
+/**
+ * True when a failure means the player is effectively signed out, rather than
+ * that this particular write was bad.
+ *
+ * Worth distinguishing carefully. When the access token is dead the PDS answers
+ * 401 `invalid_token`; atcute then attempts a refresh and, if the refresh token
+ * has been revoked too, hands the original 401 back instead of throwing. So a
+ * signed-out player produces an ordinary rejected response, not an auth
+ * exception — and treating it as a plain write failure is what let a dead
+ * session masquerade as a working one. Conversely, a genuine bad-record
+ * rejection must NOT be read as a sign-out, or a working session gets thrown
+ * away over an unrelated error.
+ */
+export function isAuthFailure(err: unknown): boolean {
+  if (err instanceof TokenRefreshError) return true;
+  if (err instanceof WriteFailedError) {
+    if (err.status === 401) return true;
+    if (err.errorName && AUTH_ERROR_NAMES.has(err.errorName.toLowerCase())) return true;
+  }
+  return false;
+}
+
+/**
+ * One-line, length-bounded description of a failed write, for the toast shown
+ * to the player. The untruncated error still goes to the console.
+ */
+export function describeWriteError(err: unknown): string {
+  const msg = err instanceof Error ? err.message : String(err);
+  return msg.length > 200 ? `${msg.slice(0, 199)}…` : msg;
 }
 
 /** True if the createRecord error means "this rkey already exists" (write-once hit). */
@@ -107,7 +174,7 @@ export async function writeResult(session: Session, result: GameResult): Promise
   // Another tab or device may have won the race between our check and our write;
   // a create that lost that race is still a no-op, not an error.
   if (isAlreadyExists(res.data) || (await resultExists(session, rkey))) return false;
-  throw new Error(`createRecord failed: ${JSON.stringify(res.data)}`);
+  throw new WriteFailedError('createRecord', COLLECTION.result, res);
 }
 
 /** Read the player's own stats record, or null if they have none yet. */
@@ -133,7 +200,7 @@ export async function writeStats(session: Session, stats: StatsRecord): Promise<
       record: stats as unknown as Record<string, unknown>,
     },
   });
-  if (!res.ok) throw new Error(`putRecord stats failed: ${JSON.stringify(res.data)}`);
+  if (!res.ok) throw new WriteFailedError('putRecord', COLLECTION.stats, res);
 }
 
 /**
@@ -289,6 +356,6 @@ export async function sharePost(
       } as unknown as Record<string, unknown>,
     },
   });
-  if (!res.ok) throw new Error(`share post failed: ${JSON.stringify(res.data)}`);
+  if (!res.ok) throw new WriteFailedError('createRecord', 'app.bsky.feed.post', res);
   return { uri: res.data.uri };
 }

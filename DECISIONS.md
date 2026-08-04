@@ -118,6 +118,26 @@ documented interpretation was needed.
     inline bar into view — it occupies the same header slot as the "Sign out" button shown when signed
     in, so the bar stays symmetric.
 
+16b. **A stored session is never resumed without validating it.** `resumeSession` calls atcute's
+    `getSession` *without* `allowStale`, so an expired access token is refreshed and a refused refresh
+    throws. The option is tempting — it avoids a network round-trip on boot — but it returns the stored
+    session without ever contacting the PDS, so an account whose refresh token had been revoked still
+    resolved to a `Session` and rendered as signed in while holding a dead token. Every write then
+    failed with an auth error and no surface anywhere said "you are signed out"; one account lost eight
+    days of results that way (puzzles 36–42). A revoked session (`TokenRefreshError`) is cleared from
+    storage; any other failure (offline, PDS down) leaves it alone so a later reload can still resume.
+    Related: writes that fail with 401 / a token error name sign the player out and stash the finished
+    game in `ctx.pendingRecord`, so it is written on the next sign-in rather than lost — see
+    `isAuthFailure`. Do not reintroduce `allowStale` outside `signOut`, where revoking a dead session
+    locally is the whole point.
+
+16c. **No sleep before the OAuth redirect.** `signIn` used to `await` a fixed 200 ms timer before
+    `location.assign`, to "let the PKCE/DPoP state persist". atcute writes that state through
+    synchronous `localStorage` calls that have already completed by the time `createAuthorizationUrl`
+    resolves, so the delay guaranteed nothing and stalled every sign-in. If sign-in state ever does go
+    missing across the redirect, the cause is storage being cleared or partitioned by the browser, not
+    a timing race — fix that, don't re-add a sleep.
+
 17. **`redirect_uri` is the site root** (`https://atmot.herve.bzh/`); the OAuth callback is detected
     from the hash params on load. Dev uses atproto's loopback client via a Vite plugin (no hosted
     metadata needed locally).

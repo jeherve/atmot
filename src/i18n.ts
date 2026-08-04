@@ -50,6 +50,12 @@ interface Strings {
   copied: string;
   savedToPds: string;
   savingToPds: string;
+  /** Prefix for a failed result write; the PDS's own reason is appended. */
+  saveFailed: string;
+  /** Prefix for a failed share post; the PDS's own reason is appended. */
+  shareFailed: string;
+  /** Shown when a write failed because the session is no longer valid. */
+  sessionExpired: string;
   signInToSave: string;
   statsTitle: string;
   played: string;
@@ -118,6 +124,9 @@ const EN: Strings = {
   copied: 'Copied ✓',
   savedToPds: 'Saved to your PDS ✓',
   savingToPds: 'Saving to your PDS…',
+  saveFailed: 'Your PDS refused to save this result —',
+  shareFailed: 'Your PDS refused to post this share —',
+  sessionExpired: 'Your session expired. Sign in again to save this result.',
   signInToSave: 'Sign in to save & share',
   statsTitle: 'Your stats',
   played: 'Played',
@@ -186,6 +195,9 @@ const FR: Strings = {
   copied: 'Copié ✓',
   savedToPds: 'Enregistré sur votre PDS ✓',
   savingToPds: 'Enregistrement sur votre PDS…',
+  saveFailed: 'Votre PDS a refusé d’enregistrer ce résultat —',
+  shareFailed: 'Votre PDS a refusé de publier ce partage —',
+  sessionExpired: 'Votre session a expiré. Reconnectez-vous pour enregistrer ce résultat.',
   signInToSave: 'Connectez-vous pour enregistrer et partager',
   statsTitle: 'Vos statistiques',
   played: 'Parties',

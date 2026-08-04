@@ -9,7 +9,12 @@ import {
   isFinished,
   toGameResult,
 } from '../state/game.js';
-import { recordCompletedGame, sharePost } from '../atproto/records.js';
+import {
+  recordCompletedGame,
+  sharePost,
+  describeWriteError,
+  isAuthFailure,
+} from '../atproto/records.js';
 import { el, mount, isEditableTarget } from './dom.js';
 import { toast } from './toast.js';
 import { renderHeader, navTo } from './header.js';
@@ -73,9 +78,24 @@ export function renderPlayView(ctx: Ctx, root: HTMLElement): void {
       statsCache.set(ctx.lang, stats);
       await settle; // let the reveal play out before rebuilding the board
       toast(t(ctx.lang).savedToPds);
-    } catch {
+    } catch (err) {
       await settle;
-      toast(t(ctx.lang).constellationDown);
+      // Saving writes to the player's own PDS; it has nothing to do with the
+      // Constellation read index. Reporting it as "the index is catching up"
+      // hid a persistent, PDS-side write failure behind a message that told
+      // players to just wait. Surface the PDS's own reason instead, and keep
+      // the untruncated error in the console for a desktop debugging session.
+      console.error('[atmot] could not record the completed game', err);
+      if (isAuthFailure(err)) {
+        // The session died under us. Drop to signed-out so the UI stops
+        // claiming otherwise, and hand the finished game to ctx so it is
+        // written as soon as the player signs back in.
+        ctx.pendingRecord = result;
+        toast(t(ctx.lang).sessionExpired, 8000);
+        await ctx.signOut(); // clears the session and re-renders
+        return;
+      }
+      toast(`${t(ctx.lang).saveFailed} ${describeWriteError(err)}`, 8000);
     }
     renderContent();
   }
@@ -129,7 +149,9 @@ export function renderPlayView(ctx: Ctx, root: HTMLElement): void {
         await sharePost(session, toGameResult(state), note);
         toast(t(ctx.lang).shared);
       } catch (e) {
-        toast(t(ctx.lang).constellationDown);
+        // Posting is also a write to the player's own repo, not an index read.
+        console.error('[atmot] could not post the share', e);
+        toast(`${t(ctx.lang).shareFailed} ${describeWriteError(e)}`, 8000);
         throw e; // keep the dialog open so the user keeps their text
       }
     });
