@@ -70,6 +70,23 @@ documented interpretation was needed.
     years out). Nothing recorded depends on it, and `tests/words.test.ts` deliberately pins only
     anchors inside the published range.
 
+23. **French drops awkward verb conjugations, mirroring the English `-S` filter.** Decision 5 gave
+    English an inflection filter (`isInflectedSForm`) but left French with none, so the French pool
+    inherited the shape of its source: OpenSubtitles is dialogue, dialogue is conjugated, and 134
+    answers (6.6%) existed only as a `vous` form, an imperfect, a passé simple or a subjunctive —
+    ARMEZ, MISEZ, TUIEZ, FONDA, BOIVE. A player reaching for *mordre* does not produce MORDE.
+    `scripts/conjugations.ts` keeps the three forms a dictionary would cite (infinitive, past
+    participle, 3rd-person singular present) and drops the rest. It works two ways because French
+    morphology isn't uniform: regular forms are **derived** — strip the ending, check the
+    reconstructed infinitive against a French dictionary of *every* length (ARMEZ → ARMER, AGIRA →
+    AGIR), exactly the trap that once made the English filter a no-op — while suppletive forms are
+    **enumerated**, because FERAI shares no stem with *faire* and IRONT none with *aller*. A
+    `NOT_A_VERB_FORM` override protects nouns the derivation misfires on: CENTS would otherwise find
+    *centre*, CHATS *châtre*, APTES *aptère*, SAUNA *sauner*, OPERA *opérer*. The rules were
+    validated against a Lexique-derived ground truth of the shipped pool: 2 disagreements, both
+    deliberate. Like all curation this runs **post-shuffle** inside `curateTail` — filtering the
+    pool instead would re-order the published prefix.
+
 ## Share & Constellation read path
 
 8. **The permalink is posted as a real richtext link facet *and* an external embed**, not plain

@@ -11,8 +11,9 @@
  * the identical sequence (UTC daily agreement is guaranteed by shared data, not
  * by runtime computation). Re-run with `npm run build:words`.
  *
- * The answer sequence is then hand-curated (see EXCLUDED) to strip words the
- * sources wrongly admit — English intrusions in the French list, slurs in both.
+ * The answer sequence is then curated to strip words the sources wrongly admit:
+ * a reviewed EXCLUDED list per language, plus a morphological filter that keeps
+ * awkward French verb conjugations out (see conjugations.ts).
  * Curation only ever touches puzzles past FROZEN_THROUGH, so published days keep
  * the word players were served.
  *
@@ -25,6 +26,7 @@ import { dirname, resolve } from 'node:path';
 import { normalizeWord } from '../src/engine/normalize.ts';
 import { encodeAnswers, decodeAnswers } from '../src/engine/obfuscate.ts';
 import { isInflectedSForm } from './plurals.ts';
+import { isConjugatedForm } from './conjugations.ts';
 import { puzzleNumberFor, type Lang } from '../src/config.ts';
 import frenchDictionary from 'an-array-of-french-words' with { type: 'json' };
 
@@ -49,10 +51,11 @@ const SEED = { en: 0x6d6f7401, fr: 0x6d6f7402 };
  * below this index is HISTORY: players have seen it, and their result records
  * are keyed by puzzle number, so the words must never move.
  *
- * Curation (see EXCLUDED below) is therefore applied only to the tail beyond
- * this point. Bump these to the current puzzle number BEFORE re-running the
- * build — `assertFreezeIsCurrent` refuses to run otherwise, and
- * `verifyFrozenPrefix` re-checks the result against the committed file.
+ * Curation (EXCLUDED below, plus the French conjugation filter) is therefore
+ * applied only to the tail beyond this point. Bump these to the current puzzle
+ * number BEFORE re-running the build — `assertFreezeIsCurrent` refuses to run
+ * otherwise, and `verifyFrozenPrefix` re-checks the result against the
+ * committed file.
  */
 const FROZEN_THROUGH: Record<Lang, number> = { en: 60, fr: 60 };
 
@@ -234,11 +237,15 @@ function assertFreezeIsCurrent(lang: Lang): void {
  * Filtering shortens the sequence, which moves the wrap-around point; that is
  * years out and affects no recorded result.
  */
-function curateTail(lang: Lang, sequence: readonly string[]): string[] {
+function curateTail(
+  lang: Lang,
+  sequence: readonly string[],
+  alsoDrop: (word: string) => boolean = () => false,
+): string[] {
   const frozen = FROZEN_THROUGH[lang];
   const excluded = EXCLUDED[lang];
   const head = sequence.slice(0, frozen);
-  const tail = sequence.slice(frozen).filter((w) => !excluded.has(w));
+  const tail = sequence.slice(frozen).filter((w) => !excluded.has(w) && !alsoDrop(w));
   console.log(`words.${lang}.json: curated ${sequence.length - frozen - tail.length} from the tail`);
   return [...head, ...tail];
 }
@@ -351,6 +358,10 @@ async function buildFrench(): Promise<void> {
   const FR_FRAGMENTS = new Set(['JUSQU', 'LORSQU', 'PUISQU', 'QUOIQU', 'PRESQU']);
 
   const validNormalized = new Set<string>();
+  // Infinitives are longer than the 5-letter forms they explain (ARMEZ -> ARMER,
+  // AGIRA -> AGIR), so the conjugation filter needs words of every length — the
+  // same trap that once made the English -S filter a no-op.
+  const frAnyLength = new Set<string>();
   const accents: Record<string, string> = {};
   for (const word of frenchDictionary as string[]) {
     // Skip multi-part entries (contractions/compounds like "est-ce", "jusqu'",
@@ -358,6 +369,7 @@ async function buildFrench(): Promise<void> {
     // real single playable words.
     if (/['’-]/.test(word)) continue;
     const n = normalizeWord(word);
+    if (n.length > 0) frAnyLength.add(n);
     if (n.length !== WORD_LENGTH) continue;
     if (FR_FRAGMENTS.has(n)) continue;
     validNormalized.add(n);
@@ -382,7 +394,13 @@ async function buildFrench(): Promise<void> {
   // so players can guess uncommon-but-real words.
   for (const n of validNormalized) allowedSet.add(n);
 
-  const answers = curateTail('fr', seededShuffle(answerPool, SEED.fr));
+  // Conjugation filtering happens here, on the shuffled sequence, rather than on
+  // the pool: removing words before the shuffle would re-order everything,
+  // including the already-published prefix.
+  const isFrWord = (w: string): boolean => validNormalized.has(w) || frAnyLength.has(w);
+  const answers = curateTail('fr', seededShuffle(answerPool, SEED.fr), (w) =>
+    isConjugatedForm(w, isFrWord),
+  );
   verifyFrozenPrefix('fr', answers);
   const allowed = [...allowedSet].sort();
   // Trim the accents map to words we actually ship.

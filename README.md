@@ -111,6 +111,13 @@ The line is drawn at whether the word has an independent life a player would rec
 ALBUM and WAGON stay French; BERET, DEBUT, FOYER and SUSHI stay English; ROBIN, PEARL and OLIVE
 stay, because a robin is a bird before it is a person.
 
+French additionally drops **awkward verb conjugations** (`scripts/conjugations.ts`), the counterpart
+to the English `-S` inflection filter. Subtitle corpora are mostly dialogue, so conjugated verbs
+rank very high — ARMEZ, MISEZ, TUIEZ, FONDA, BOIVE were all queued as daily answers. The
+infinitive, past participle and 3rd-person singular are kept; every other person and tense goes.
+Regular forms are derived by reconstructing the infinitive against the dictionary; suppletive forms
+(FERAI holds no *faire*, IRONT no *aller*) are enumerated.
+
 Excluded words remain legal *guesses* — typing a real word should never be rejected.
 
 Curation never rewrites history. `FROZEN_THROUGH` records the last published puzzle per language;
