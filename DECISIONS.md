@@ -44,6 +44,49 @@ documented interpretation was needed.
 7. **Generated word JSON is committed.** It *is* the game content and must be byte-identical across
    clients; `npm run build:words` regenerates it reproducibly.
 
+22. **The answer sequence is hand-curated on top of the generated one, and curation only ever
+    touches the future.** Decision 5 assumed the dictionary is a sufficient validity gate. It
+    isn't: `an-array-of-french-words` is derived from a *Letterpress game* list, so it admits
+    English loanwords (`flood`, `glass`, `tommy`) and bare forenames as valid French. Combined
+    with a commonness ranking built from **French subtitles** — which are full of untranslated
+    English dialogue and character names — that shipped **FLOOD as the French answer for
+    2026-08-21**. No automated source separates a naturalised loanword (LASER, ALBUM, WAGON,
+    SHORT — properly French) from an intrusion (FLOOD, GREAT, GROUP), so `EXCLUDED` in
+    `scripts/build-wordlists.ts` is a **reviewed editorial list**, not a heuristic: non-French
+    tokens, proper nouns, slurs, and crude terms, in both languages. English needed the same
+    treatment for a different reason: ENABLE has no foreign intrusions, but it lists proper nouns
+    lowercase wherever some obscure common-noun sense exists (a `jenny` is a female donkey, a
+    `henry` an SI unit, to `japan` is to lacquer), and it carries slurs. The test is whether the
+    word has an independent life a player would recognise — BERET and SUSHI stay, HAUTE and CULPA
+    go; ROBIN and PEARL stay, JENNY and TESLA go. Two constraints shape how it is applied. First, **exclusions filter answers only** — every excluded word stays a legal *guess*,
+    because a player typing a real word should never be told it isn't one. Second, **already-played
+    puzzles are frozen**: `FROZEN_THROUGH` marks the last published puzzle per language, curation
+    filters only the tail beyond it, and `verifyFrozenPrefix` re-checks the result against the
+    committed file. FLOOD therefore remains the answer for 2026-08-21 forever — results are keyed
+    by `<lang>-<puzzleNumber>`, so rewriting history would silently invalidate recorded games.
+    `assertFreezeIsCurrent` refuses to build when `FROZEN_THROUGH` has fallen behind the calendar,
+    which is the one way this could go wrong unnoticed. Accepted consequence: filtering shortens
+    the sequence, which moves the wrap-around point (FR 2200→2094, EN 2500→2475, so ~5.7 and ~6.8
+    years out). Nothing recorded depends on it, and `tests/words.test.ts` deliberately pins only
+    anchors inside the published range.
+
+23. **French drops awkward verb conjugations, mirroring the English `-S` filter.** Decision 5 gave
+    English an inflection filter (`isInflectedSForm`) but left French with none, so the French pool
+    inherited the shape of its source: OpenSubtitles is dialogue, dialogue is conjugated, and 134
+    answers (6.6%) existed only as a `vous` form, an imperfect, a passé simple or a subjunctive —
+    ARMEZ, MISEZ, TUIEZ, FONDA, BOIVE. A player reaching for *mordre* does not produce MORDE.
+    `scripts/conjugations.ts` keeps the three forms a dictionary would cite (infinitive, past
+    participle, 3rd-person singular present) and drops the rest. It works two ways because French
+    morphology isn't uniform: regular forms are **derived** — strip the ending, check the
+    reconstructed infinitive against a French dictionary of *every* length (ARMEZ → ARMER, AGIRA →
+    AGIR), exactly the trap that once made the English filter a no-op — while suppletive forms are
+    **enumerated**, because FERAI shares no stem with *faire* and IRONT none with *aller*. A
+    `NOT_A_VERB_FORM` override protects nouns the derivation misfires on: CENTS would otherwise find
+    *centre*, CHATS *châtre*, APTES *aptère*, SAUNA *sauner*, OPERA *opérer*. The rules were
+    validated against a Lexique-derived ground truth of the shipped pool: 2 disagreements, both
+    deliberate. Like all curation this runs **post-shuffle** inside `curateTail` — filtering the
+    pool instead would re-order the published prefix.
+
 ## Share & Constellation read path
 
 8. **The permalink is posted as a real richtext link facet *and* an external embed**, not plain
