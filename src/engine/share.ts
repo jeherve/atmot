@@ -62,11 +62,11 @@ export function assembleShareText(result: GameResult, note: string): string {
 }
 
 /**
- * The full post text for "Share to atproto" with the default header note.
- * Used by the clipboard "Copy grid" action.
+ * The clipboard "Copy grid" text: header, grid and permalink. Unlike the default
+ * share note it carries no hashtag, since it can be pasted anywhere.
  */
 export function buildShareText(result: GameResult): string {
-  return assembleShareText(result, defaultShareNote(result));
+  return assembleShareText(result, shareHeader(result));
 }
 
 /** A Bluesky richtext link or tag facet (UTF-8 byte offsets). */

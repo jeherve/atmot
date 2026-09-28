@@ -45,7 +45,7 @@ describe('share text', () => {
     expect(text).toContain('https://atmot.herve.bzh/p/fr/412');
     // header, blank, grid, blank, link
     const parts = text.split('\n\n');
-    expect(parts[0]).toBe('AT Mot 412 (FR) 4/6 #puzzlesurf');
+    expect(parts[0]).toBe('AT Mot 412 (FR) 4/6');
     expect(parts[2]).toBe('https://atmot.herve.bzh/p/fr/412');
   });
 
@@ -79,8 +79,9 @@ describe('custom share message', () => {
     expect(text).toContain('https://atmot.herve.bzh/p/fr/412');
   });
 
-  it('buildShareText uses the default note', () => {
-    expect(buildShareText(win)).toBe(assembleShareText(win, defaultShareNote(win)));
+  it('buildShareText (Copy grid) uses the bare header, without the hashtag', () => {
+    expect(buildShareText(win)).toBe(assembleShareText(win, shareHeader(win)));
+    expect(buildShareText(win)).not.toContain('#');
   });
 
   it('buildShareFacets recomputes byte offsets for a custom note', () => {
@@ -93,7 +94,7 @@ describe('custom share message', () => {
   });
 
   it('buildShareFacets tags the default #puzzlesurf hashtag and keeps the link facet last', () => {
-    const text = buildShareText(win);
+    const text = assembleShareText(win, defaultShareNote(win));
     const facets = buildShareFacets(win);
     expect(facets).toHaveLength(2);
     expect(facets[0]!.features).toEqual([{ $type: 'app.bsky.richtext.facet#tag', tag: 'puzzlesurf' }]);
