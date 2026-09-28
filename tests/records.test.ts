@@ -51,7 +51,7 @@ describe('sharePost', () => {
     const { session, post } = fakeSession({});
     await sharePost(session, sharedResult());
     const rec = (post.mock.calls[0]![1] as { input: { record: { text: string } } }).input.record;
-    expect(rec.text).toContain('AT Mot 412 (FR) 4/6');
+    expect(rec.text).toContain('AT Mot 412 (FR) 4/6 #puzzlesurf');
     expect(rec.text.trimEnd().endsWith('https://atmot.herve.bzh/p/fr/412')).toBe(true);
   });
 

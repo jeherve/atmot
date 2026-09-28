@@ -8,6 +8,7 @@ import {
   POST_MAX_GRAPHEMES,
   emojiGrid,
   shareHeader,
+  type ShareFacet,
 } from '../src/engine/share.js';
 import type { GameResult } from '../src/engine/types.js';
 
@@ -24,6 +25,11 @@ const win: GameResult = {
   ],
 };
 
+function sliceBytes(text: string, facet: ShareFacet): string {
+  const bytes = new TextEncoder().encode(text);
+  return new TextDecoder().decode(bytes.slice(facet.index.byteStart, facet.index.byteEnd));
+}
+
 describe('share text', () => {
   it('header is "AT Mot <n> (<LANG>) <score>"', () => {
     expect(shareHeader(win)).toBe('AT Mot 412 (FR) 4/6');
@@ -39,7 +45,7 @@ describe('share text', () => {
     expect(text).toContain('https://atmot.herve.bzh/p/fr/412');
     // header, blank, grid, blank, link
     const parts = text.split('\n\n');
-    expect(parts[0]).toBe('AT Mot 412 (FR) 4/6');
+    expect(parts[0]).toBe('AT Mot 412 (FR) 4/6 #puzzlesurf');
     expect(parts[2]).toBe('https://atmot.herve.bzh/p/fr/412');
   });
 
@@ -54,8 +60,8 @@ describe('share text', () => {
 });
 
 describe('custom share message', () => {
-  it('defaultShareNote is the header line', () => {
-    expect(defaultShareNote(win)).toBe('AT Mot 412 (FR) 4/6');
+  it('defaultShareNote is the header line plus the #puzzlesurf hashtag', () => {
+    expect(defaultShareNote(win)).toBe('AT Mot 412 (FR) 4/6 #puzzlesurf');
   });
 
   it('assembleShareText keeps grid + link, with the note first', () => {
@@ -73,8 +79,8 @@ describe('custom share message', () => {
     expect(text).toContain('https://atmot.herve.bzh/p/fr/412');
   });
 
-  it('buildShareText is unchanged (default note = header)', () => {
-    expect(buildShareText(win)).toBe(assembleShareText(win, shareHeader(win)));
+  it('buildShareText uses the default note', () => {
+    expect(buildShareText(win)).toBe(assembleShareText(win, defaultShareNote(win)));
   });
 
   it('buildShareFacets recomputes byte offsets for a custom note', () => {
@@ -84,6 +90,32 @@ describe('custom share message', () => {
     const bytes = new TextEncoder().encode(text);
     const slice = new TextDecoder().decode(bytes.slice(facet.index.byteStart, facet.index.byteEnd));
     expect(slice).toBe('https://atmot.herve.bzh/p/fr/412');
+  });
+
+  it('buildShareFacets tags the default #puzzlesurf hashtag and keeps the link facet last', () => {
+    const text = buildShareText(win);
+    const facets = buildShareFacets(win);
+    expect(facets).toHaveLength(2);
+    expect(facets[0]!.features).toEqual([{ $type: 'app.bsky.richtext.facet#tag', tag: 'puzzlesurf' }]);
+    expect(sliceBytes(text, facets[0]!)).toBe('#puzzlesurf');
+    expect(facets[1]!.features[0]!.$type).toBe('app.bsky.richtext.facet#link');
+    expect(sliceBytes(text, facets[1]!)).toBe('https://atmot.herve.bzh/p/fr/412');
+  });
+
+  it('buildShareFacets tags hashtags the player types, at the right byte offsets', () => {
+    const note = '  Réussi 🎉 #motdujour, #puzzlesurf!';
+    const text = assembleShareText(win, note);
+    const tags = buildShareFacets(win, note).filter(
+      (f) => f.features[0]!.$type === 'app.bsky.richtext.facet#tag',
+    );
+    expect(tags.map((f) => sliceBytes(text, f))).toEqual(['#motdujour', '#puzzlesurf']);
+    expect(tags.map((f) => (f.features[0] as { tag: string }).tag)).toEqual(['motdujour', 'puzzlesurf']);
+  });
+
+  it('buildShareFacets ignores non-hashtags', () => {
+    for (const note of ['No tag here', 'score#1', '#123', '#', 'AT Mot 412 (FR) 4/6']) {
+      expect(buildShareFacets(win, note)).toHaveLength(1);
+    }
   });
 
   it('countGraphemes treats each emoji square as one', () => {

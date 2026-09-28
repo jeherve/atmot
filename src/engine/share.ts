@@ -37,9 +37,12 @@ export function shareHeader(result: GameResult): string {
   return `${BRAND} ${result.puzzleNumber} (${result.lang.toUpperCase()}) ${scoreLabel(result)}`;
 }
 
-/** The default editable note shown in the share dialog — the header line. */
+/** Community hashtag offered in the default note; players can delete it. */
+export const SHARE_HASHTAG = 'puzzlesurf';
+
+/** The default editable note shown in the share dialog — the header line plus the hashtag. */
 export function defaultShareNote(result: GameResult): string {
-  return shareHeader(result);
+  return `${shareHeader(result)} #${SHARE_HASHTAG}`;
 }
 
 /**
@@ -66,17 +69,53 @@ export function buildShareText(result: GameResult): string {
   return assembleShareText(result, defaultShareNote(result));
 }
 
-/** A Bluesky richtext link facet (UTF-8 byte offsets). */
+/** A Bluesky richtext link or tag facet (UTF-8 byte offsets). */
 export interface ShareFacet {
   index: { byteStart: number; byteEnd: number };
-  features: Array<{ $type: 'app.bsky.richtext.facet#link'; uri: string }>;
+  features: Array<
+    | { $type: 'app.bsky.richtext.facet#link'; uri: string }
+    | { $type: 'app.bsky.richtext.facet#tag'; tag: string }
+  >;
+}
+
+// Hashtag detection mirrors @atproto/api's RichText.detectFacets, so a tag the
+// player types here is faceted exactly as the Bluesky composer would facet it.
+const TAG_REGEX =
+  /(^|\s)[#＃]((?!️)[^\s­⁠ ​‌‍⃢]*[^\d\s\p{P}­⁠ ​‌‍⃢]+[^\s­⁠ ​‌‍⃢]*)?/gu;
+const TRAILING_PUNCTUATION = /\p{P}+$/u;
+const MAX_TAG_LENGTH = 64;
+
+/**
+ * Tag facets for every hashtag in the note. Without a facet, "#puzzlesurf" is
+ * plain text: it isn't clickable and doesn't show up in the hashtag feed.
+ */
+function tagFacets(note: string): ShareFacet[] {
+  // assembleShareText puts the trimmed note first, so note offsets are post offsets.
+  const text = note.trim();
+  const enc = new TextEncoder();
+  const facets: ShareFacet[] = [];
+  for (const match of text.matchAll(TAG_REGEX)) {
+    const [, leading = '', rawTag] = match;
+    if (!rawTag) continue;
+    const tag = rawTag.trim().replace(TRAILING_PUNCTUATION, '');
+    if (tag.length === 0 || tag.length > MAX_TAG_LENGTH) continue;
+    const start = (match.index ?? 0) + leading.length;
+    const end = start + 1 + tag.length; // "#" / "＃" is one UTF-16 unit
+    const byteStart = enc.encode(text.slice(0, start)).length;
+    facets.push({
+      index: { byteStart, byteEnd: byteStart + enc.encode(text.slice(start, end)).length },
+      features: [{ $type: 'app.bsky.richtext.facet#tag', tag }],
+    });
+  }
+  return facets;
 }
 
 /**
- * Build the link facet for the permalink inside the post text.
+ * Build the facets for the post text: a tag facet per hashtag in the note, then
+ * the link facet for the permalink.
  *
- * This is LOAD-BEARING: a plain-text URL is not indexed by Constellation, so the
- * permalink must be a real richtext link feature for shared posts to be
+ * The link facet is LOAD-BEARING: a plain-text URL is not indexed by Constellation,
+ * so the permalink must be a real richtext link feature for shared posts to be
  * discoverable as backlinks. Offsets are UTF-8 byte positions per the spec.
  */
 export function buildShareFacets(
@@ -89,6 +128,7 @@ export function buildShareFacets(
   const byteStart = enc.encode(text.slice(0, text.lastIndexOf(link))).length;
   const byteEnd = byteStart + enc.encode(link).length;
   return [
+    ...tagFacets(note),
     {
       index: { byteStart, byteEnd },
       features: [{ $type: 'app.bsky.richtext.facet#link', uri: link }],
