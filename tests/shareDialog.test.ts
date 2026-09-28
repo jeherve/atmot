@@ -30,7 +30,7 @@ describe('openShareDialog', () => {
     openShareDialog('en', result, async () => {});
     const ta = document.querySelector('dialog.share-edit textarea') as HTMLTextAreaElement;
     expect(ta).not.toBeNull();
-    expect(ta.value).toBe('AT Mot 412 (FR) 4/6');
+    expect(ta.value).toBe('AT Mot 412 (FR) 4/6 #puzzlesurf');
   });
 
   it('shows the grid + link in a read-only preview', () => {
