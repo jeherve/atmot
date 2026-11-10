@@ -10,7 +10,6 @@
     "dev": "vite",
     "build": "npm run typecheck && vite build",
     "build:words": "tsx scripts/build-wordlists.ts",
-    "deploy": "npm run build && wrangler pages deploy dist --project-name=atmot --branch=trunk",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -36,7 +35,6 @@
     "tsx": "^4.22.4",
     "typescript": "^6.0.3",
     "vite": "^8.0.16",
-    "vitest": "^4.1.9",
-    "wrangler": "^4.103.0"
+    "vitest": "^4.1.9"
   }
 }
