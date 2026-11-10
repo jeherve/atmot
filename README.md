@@ -164,7 +164,9 @@ The build settings live on the Space's source connection (dashboard: **Builds â†
 - **Output directory:** `dist`
 - **Production branch:** `trunk`
 - **Custom domain:** `atmot.herve.bzh` (DNS on Cloudflare, two unproxied `A` records pointing at
-  Spacefast). `atmot.space.fast` redirects to it.
+  Spacefast, plus a `TXT` record Spacefast uses to verify ownership). The site is also served on
+  `atmot.space.fast`, but sign-in only works on `atmot.herve.bzh`, the host the OAuth `client_id`
+  names.
 
 Build logs are on the Space's **Builds** page, or `sf builds ls --space atmot` with the
 [Spacefast CLI](https://spacefast.com/docs/cli).
