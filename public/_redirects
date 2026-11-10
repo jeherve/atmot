@@ -1,4 +1,4 @@
-# Cloudflare Pages SPA fallback: every route is served by the single-page app,
+# SPA fallback: every route is served by the single-page app,
 # which then client-side-routes (including the /p/<lang>/<puzzleNumber> permalinks).
 # Real static files (assets, client-metadata.json, fonts) are served before this rule.
 /*    /index.html    200

@@ -26,7 +26,7 @@ describe('renderFooter', () => {
 
   it('does not link out to the source repository', () => {
     const footer = renderFooter(makeCtx());
-    expect(footer.querySelector('a[href*="tangled.org"]')).toBeNull();
+    expect(footer.querySelector('a[href*="github.com/jeherve/atmot"]')).toBeNull();
   });
 
   it('renders the avatar as an image', () => {

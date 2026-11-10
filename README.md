@@ -29,7 +29,7 @@ apps:
 ## Architecture at a glance
 
 ```
-        ┌─────────────── browser (static SPA on Cloudflare Pages) ───────────────┐
+        ┌────────────────── browser (static SPA on Spacefast) ───────────────────┐
         │                                                                         │
   play  │  deterministic daily word (bundled list, UTC day index)                 │
         │                              │                                          │
@@ -149,29 +149,25 @@ AT Mot requests **granular OAuth scopes** (least privilege) rather than the broa
 — write access is limited to exactly the three collections it creates: `bzh.herve.atmot.result`,
 `bzh.herve.atmot.stats`, and `app.bsky.feed.post`. See DECISIONS.md (#17b).
 
-## Deploy (Cloudflare Pages)
+## Deploy (Spacefast)
 
-The git remote lives on [tangled.org](https://tangled.org), so Cloudflare's git-connected builds
-aren't available. Deployment uses **Wrangler direct upload** instead — build locally, then push the
-`dist/` folder straight to the `atmot` Pages project:
+The site is hosted on [Spacefast](https://spacefast.com), connected to the
+[GitHub repository](https://github.com/jeherve/atmot). Every push to `trunk` triggers a build and
+publishes it to production. There is no manual deploy step. Pushes to other branches don't build.
 
-```bash
-npm run deploy
-```
+The build settings live on the Space's source connection (dashboard: **Builds → Build settings**):
 
-This runs `npm run build` (typecheck + Vite build) and then
-`wrangler pages deploy dist --project-name=atmot --branch=trunk`. The first run prompts for
-`wrangler login`.
-
-The `--branch=trunk` flag is important: Wrangler tags a deployment with your current local git
-branch, and Cloudflare only promotes deployments whose branch matches the project's **production
-branch** (`trunk`). Without it, deploying from a feature branch produces a preview URL and leaves the
-live site unchanged.
-
+- **Space:** `atmot` (team `jeherve`)
+- **Install command:** `npm ci`
+- **Build command:** `npm run build` (typecheck + Vite build). The Vite preset would otherwise run
+  plain `vite build` and skip the typecheck.
 - **Output directory:** `dist`
-- **Pages project:** `atmot`
 - **Production branch:** `trunk`
-- **Custom domain:** `atmot.herve.bzh`
+- **Custom domain:** `atmot.herve.bzh` (DNS on Cloudflare, two unproxied `A` records pointing at
+  Spacefast). `atmot.space.fast` redirects to it.
+
+Build logs are on the Space's **Builds** page, or `sf builds ls --space atmot` with the
+[Spacefast CLI](https://spacefast.com/docs/cli).
 
 `public/_redirects` provides the SPA history fallback so the `/p/<lang>/<n>` permalinks resolve to
 real pages. No origin server or environment variables are required for core gameplay.
